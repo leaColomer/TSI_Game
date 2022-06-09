@@ -6,8 +6,19 @@ import pyrr
 import numpy as np
 from cpe3d import Object3D
 
+
 class ViewerGL:
     def __init__(self):
+
+        PLEIN_ECRAN = False
+        self.HEIGHT = 400
+        self.WIDTH = 1000
+        self.sensi = 0.005
+        #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
+        self.lastX, self.lastY = 0, 0
+
+
+
         # initialisation de la librairie GLFW
         glfw.init()
         # paramétrage du context OpenGL
@@ -17,9 +28,18 @@ class ViewerGL:
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # création et paramétrage de la fenêtre
         glfw.window_hint(glfw.RESIZABLE, False)
-        self.window = glfw.create_window(800, 800, 'OpenGL', None, None)
+        if PLEIN_ECRAN:
+            PLEIN_ECRAN_ = glfw.get_primary_monitor()
+        else:
+            PLEIN_ECRAN_ = None
+        self.window = glfw.create_window(self.WIDTH, self.HEIGHT, 'OpenGL', PLEIN_ECRAN_, None)
         # paramétrage de la fonction de gestion des évènements
         glfw.set_key_callback(self.window, self.key_callback)
+
+    	#leo gestion souris
+        glfw.set_cursor_pos_callback(self.window, self.mouse_callback )
+        glfw.set_input_mode(self.window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+
         # activation du context OpenGL pour la fenêtre
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
@@ -31,6 +51,17 @@ class ViewerGL:
 
         self.objs = []
         self.touch = {}
+
+
+        
+        if (glfw.raw_mouse_motion_supported()):
+            print("SOURIS AU NATUREL")
+            glfw.set_input_mode(self.window, glfw.RAW_MOUSE_MOTION, glfw.TRUE);
+        
+        
+
+
+
 
     def run(self):
         # boucle d'affichage
@@ -95,28 +126,48 @@ class ViewerGL:
         GL.glUniformMatrix4fv(loc, 1, GL.GL_FALSE, self.cam.projection)
 
     def update_key(self):
-        if glfw.KEY_UP in self.touch and self.touch[glfw.KEY_UP] > 0:
+        if glfw.KEY_W in self.touch and self.touch[glfw.KEY_W] > 0: #KEY Z
             self.objs[0].transformation.translation += \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.04]))
-        if glfw.KEY_DOWN in self.touch and self.touch[glfw.KEY_DOWN] > 0:
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.1]))
+        if glfw.KEY_S in self.touch and self.touch[glfw.KEY_S] > 0: #KEY S
             self.objs[0].transformation.translation -= \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.04]))
-        if glfw.KEY_LEFT in self.touch and self.touch[glfw.KEY_LEFT] > 0:
-            self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] -= 0.1
-        if glfw.KEY_RIGHT in self.touch and self.touch[glfw.KEY_RIGHT] > 0:
-            self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] += 0.1
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.1]))
+        if glfw.KEY_A in self.touch and self.touch[glfw.KEY_A] > 0: #KEY Q
+            self.objs[0].transformation.translation += \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0.1, 0, 0]))
+        if glfw.KEY_D in self.touch and self.touch[glfw.KEY_D] > 0: #KEY D
+            self.objs[0].transformation.translation -= \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0.1, 0, 0]))
 
-        if glfw.KEY_I in self.touch and self.touch[glfw.KEY_I] > 0:
-            self.cam.transformation.rotation_euler[pyrr.euler.index().roll] -= 0.1
-        if glfw.KEY_K in self.touch and self.touch[glfw.KEY_K] > 0:
-            self.cam.transformation.rotation_euler[pyrr.euler.index().roll] += 0.1
-        if glfw.KEY_J in self.touch and self.touch[glfw.KEY_J] > 0:
-            self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] -= 0.1
-        if glfw.KEY_L in self.touch and self.touch[glfw.KEY_L] > 0:
-            self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += 0.1
-
-        if glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0:
-            self.cam.transformation.rotation_euler = self.objs[0].transformation.rotation_euler.copy() 
-            self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
+        if not(glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0):
+            #self.cam.transformation.rotation_euler = self.objs[0].transformation.rotation_euler.copy() 
+            #self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
             self.cam.transformation.rotation_center = self.objs[0].transformation.translation + self.objs[0].transformation.rotation_center
-            self.cam.transformation.translation = self.objs[0].transformation.translation + pyrr.Vector3([0, 1, 5])
+            self.cam.transformation.translation = self.objs[0].transformation.translation + pyrr.Vector3([0, 1, 4])
+
+    def mouse_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
+
+        # if first_mouse:
+        #     lastX = xpos
+        #     lastY = ypos
+        #     first_mouse = False
+
+
+        xoffset = (xpos - self.lastX)*self.sensi
+        yoffset = (ypos - self.lastY)*self.sensi
+
+        self.lastX = xpos
+        self.lastY = ypos
+
+        roll = self.cam.transformation.rotation_euler[pyrr.euler.index().roll]
+    
+        if roll+yoffset >= -0.2 and roll+yoffset <= 1:
+            self.cam.transformation.rotation_euler[pyrr.euler.index().roll] += yoffset
+
+        self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += xoffset
+
+        #forcer le perso a suivre la cam
+        self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
+
+
+        

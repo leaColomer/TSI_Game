@@ -38,9 +38,9 @@ def main():
     viewer.add_object(o)
 
 
-    #leo essaie de faire un labyrinthe
+    #premier mur de leo
     m = Mesh()
-    p0, p1, p2, p3 = [-10, 0, -10], [-10, 0, 10], [-10, 5, 10], [-10, 5, -10]
+    p0, p1, p2, p3 = [-10, 0, 0], [-10, 0, 10], [-10, 5, 10], [-10, 5, 0]
     n, c = [1, 0, 0], [1, 1, 1]
     t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1]
     m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
@@ -51,12 +51,12 @@ def main():
 
 
 
-    vao = Text.initalize_geometry()
-    texture = glutils.load_texture('fontB.jpg')
-    o = Text('Bonjour les', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao, 2, programGUI_id, texture)
-    viewer.add_object(o)
-    o = Text('3ETI', np.array([-0.5, -0.2], np.float32), np.array([0.5, 0.3], np.float32), vao, 2, programGUI_id, texture)
-    viewer.add_object(o)
+    # vao = Text.initalize_geometry()
+    # texture = glutils.load_texture('fontB.jpg')
+    # o = Text('Bonjour les', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao, 2, programGUI_id, texture)
+    # viewer.add_object(o)
+    # o = Text('3ETI', np.array([-0.5, -0.2], np.float32), np.array([0.5, 0.3], np.float32), vao, 2, programGUI_id, texture)
+    # viewer.add_object(o)
 
     viewer.run()
 
