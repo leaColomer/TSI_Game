@@ -5,17 +5,24 @@ import glfw
 import pyrr
 import numpy as np
 from cpe3d import Object3D
+from time import time
 
 
 class ViewerGL:
     def __init__(self):
 
-        PLEIN_ECRAN = False
+        PLEIN_ECRAN = True
+        self.TEMPS = 60
+
         self.HEIGHT = 400
-        self.WIDTH = 1000
-        self.sensi = 0.005
+        self.WIDTH = 1400
+        self.SENSI = 0.005
         #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
         self.lastX, self.lastY = 0, 0
+
+        self.temps_origine = None
+        self.timer_text_object = None
+
 
 
 
@@ -70,6 +77,8 @@ class ViewerGL:
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             self.update_key()
+
+            self.timer_update()
 
             for obj in self.objs:
                 GL.glUseProgram(obj.program)
@@ -153,8 +162,8 @@ class ViewerGL:
         #     first_mouse = False
 
 
-        xoffset = (xpos - self.lastX)*self.sensi
-        yoffset = (ypos - self.lastY)*self.sensi
+        xoffset = (xpos - self.lastX)*self.SENSI
+        yoffset = (ypos - self.lastY)*self.SENSI
 
         self.lastX = xpos
         self.lastY = ypos
@@ -170,4 +179,13 @@ class ViewerGL:
         self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
 
 
-        
+    def set_timer(self, timer, temps_origine):
+        self.timer_text_object = timer
+        self.temps_origine = temps_origine
+
+
+    def timer_update(self):
+        self.timer_text_object.value = str(self.TEMPS + self.temps_origine - time())[:4]
+        #vao = Text.initalize_geometry()
+        #texture = glutils.load_texture('fontB.jpg')
+        # o = Text('Bonjour les', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao, 2, programGUI_id, texture)

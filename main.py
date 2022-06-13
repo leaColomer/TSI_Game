@@ -5,6 +5,7 @@ from cpe3d import Object3D, Camera, Transformation3D, Text
 import numpy as np
 import OpenGL.GL as GL
 import pyrr
+from time import time
 
 def main():
     viewer = ViewerGL()
@@ -27,6 +28,7 @@ def main():
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.add_object(o)
 
+    #sol
     m = Mesh()
     p0, p1, p2, p3 = [-25, 0, -25], [25, 0, -25], [25, 0, 25], [-25, 0, 25]
     n, c = [0, 1, 0], [1, 1, 1]
@@ -40,10 +42,21 @@ def main():
 
     #premier mur de leo
     m = Mesh()
-    p0, p1, p2, p3 = [-10, 0, 0], [-10, 0, 10], [-10, 5, 10], [-10, 5, 0]
+    p0, p1, p2, p3, p4, p5, p6, p7 = [-10, 0, 0], [-10, 0, 10], [-10, 5, 10], [-10, 5, 0], [-11, 0, 0], [-11, 0, 10], [-11, 5, 10], [-11, 5, 0]
+    n, c = [1, 0, 0], [1, 1, 1]
+    t0, t1, t2, t3, t4, t5, t6, t7 = [0, 0], [1, 0], [1, 1], [0, 1], [0, 0], [1, 0], [1, 1], [0, 1]
+    m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3], [p4 + n + c + t4], [p5 + n + c + t5], [p6 + n + c + t6], [p7 + n + c + t7]], np.float32)
+    m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
+    texture = glutils.load_texture('brique.jpg')
+    o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, Transformation3D())
+    viewer.add_object(o)
+
+    #deuxieme mur de leo
+    m = Mesh()
+    p0, p1, p2, p3 = [10, 0, 0], [10, 0, 4], [10, 5, 4], [10, 5, 0]
     n, c = [1, 0, 0], [1, 1, 1]
     t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1]
-    m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
+    m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3],], np.float32)
     m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
     texture = glutils.load_texture('brique.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, Transformation3D())
@@ -51,12 +64,15 @@ def main():
 
 
 
-    # vao = Text.initalize_geometry()
-    # texture = glutils.load_texture('fontB.jpg')
+    vao = Text.initalize_geometry()
+    texture = glutils.load_texture('fontB.jpg')
     # o = Text('Bonjour les', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao, 2, programGUI_id, texture)
     # viewer.add_object(o)
-    # o = Text('3ETI', np.array([-0.5, -0.2], np.float32), np.array([0.5, 0.3], np.float32), vao, 2, programGUI_id, texture)
-    # viewer.add_object(o)
+    #ARGS self, value, bottomLeft, topRight, vao, nb_triangle, program, texture
+    o = Text('HUGO JTM', np.array([-0.15, 0.85], np.float32), np.array([0.15, 0.95], np.float32), vao, 2, programGUI_id, texture)
+    viewer.add_object(o)
+    viewer.set_timer(o,time())
+
 
     viewer.run()
 
