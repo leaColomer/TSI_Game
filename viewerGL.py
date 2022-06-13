@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from random import random
 import OpenGL.GL as GL
 import glfw
 import pyrr
@@ -11,14 +12,18 @@ from time import time
 class ViewerGL:
     def __init__(self):
 
-        PLEIN_ECRAN = True
+        PLEIN_ECRAN = False
         self.TEMPS = 60
 
-        self.HEIGHT = 400
-        self.WIDTH = 1400
+        self.HEIGHT = 480
+        self.WIDTH = 640
         self.SENSI = 0.005
         #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
         self.lastX, self.lastY = 0, 0
+
+        self.fps_last_time = 0
+        self.fps_10_last = [0 for i in range(10)]
+        self.fps_text_object = None
 
         self.temps_origine = None
         self.timer_text_object = None
@@ -59,6 +64,10 @@ class ViewerGL:
         self.objs = []
         self.touch = {}
 
+        self.murs = []
+
+        self.perso = None
+
 
         
         if (glfw.raw_mouse_motion_supported()):
@@ -80,9 +89,11 @@ class ViewerGL:
 
             self.timer_update()
 
+            
+
             for obj in self.objs:
                 GL.glUseProgram(obj.program)
-                if isinstance(obj, Object3D):
+                if isinstance(obj, Object3D) and random():
                     self.update_camera(obj.program)
                 obj.draw()
 
@@ -90,6 +101,11 @@ class ViewerGL:
             glfw.swap_buffers(self.window)
             # gestion des évènements
             glfw.poll_events()
+
+
+
+            self.update_fps()
+
         
     def key_callback(self, win, key, scancode, action, mods):
         # sortie du programme si appui sur la touche 'échappement'
@@ -136,23 +152,23 @@ class ViewerGL:
 
     def update_key(self):
         if glfw.KEY_W in self.touch and self.touch[glfw.KEY_W] > 0: #KEY Z
-            self.objs[0].transformation.translation += \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.1]))
+            self.perso.transformation.translation += \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0, 0, 0.5]))
         if glfw.KEY_S in self.touch and self.touch[glfw.KEY_S] > 0: #KEY S
-            self.objs[0].transformation.translation -= \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.1]))
+            self.perso.transformation.translation -= \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0, 0, 0.5]))
         if glfw.KEY_A in self.touch and self.touch[glfw.KEY_A] > 0: #KEY Q
-            self.objs[0].transformation.translation += \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0.1, 0, 0]))
+            self.perso.transformation.translation += \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0.5, 0, 0]))
         if glfw.KEY_D in self.touch and self.touch[glfw.KEY_D] > 0: #KEY D
-            self.objs[0].transformation.translation -= \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0.1, 0, 0]))
+            self.perso.transformation.translation -= \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0.5, 0, 0]))
 
         if not(glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0):
-            #self.cam.transformation.rotation_euler = self.objs[0].transformation.rotation_euler.copy() 
+            #self.cam.transformation.rotation_euler = self.perso.transformation.rotation_euler.copy() 
             #self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
-            self.cam.transformation.rotation_center = self.objs[0].transformation.translation + self.objs[0].transformation.rotation_center
-            self.cam.transformation.translation = self.objs[0].transformation.translation + pyrr.Vector3([0, 1, 4])
+            self.cam.transformation.rotation_center = self.perso.transformation.translation + self.perso.transformation.rotation_center
+            self.cam.transformation.translation = self.perso.transformation.translation + pyrr.Vector3([0, 1, 4])
 
     def mouse_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
 
@@ -176,7 +192,7 @@ class ViewerGL:
         self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += xoffset
 
         #forcer le perso a suivre la cam
-        self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
+        self.perso.transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
 
 
     def set_timer(self, timer, temps_origine):
@@ -186,6 +202,9 @@ class ViewerGL:
 
     def timer_update(self):
         self.timer_text_object.value = str(self.TEMPS + self.temps_origine - time())[:4]
-        #vao = Text.initalize_geometry()
-        #texture = glutils.load_texture('fontB.jpg')
-        # o = Text('Bonjour les', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao, 2, programGUI_id, texture)
+
+
+    def update_fps(self):
+        self.fps_10_last.append(1/(time() - self.fps_last_time))
+        self.fps_text_object.value = str(np.average(self.fps_10_last))[:2]
+        self.fps_last_time = time()

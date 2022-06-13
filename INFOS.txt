@@ -1,0 +1,33 @@
+Reutilisation intelligente d'objets :
+vertex array object VAO c'est puissant
+vertex buffer object
+
+
+    #deuxieme mur de leo
+    m = Mesh.load_obj('mur.obj')
+    vao = m.load_to_gpu()           <<<<<<<<<<<<< Charger au gpu une seule fois, et comme ça on peut dupliquer l'objet
+    m.normalize()
+    m.apply_matrix(pyrr.matrix44.create_from_scale([2, 2, 2, 1]))
+    tr = Transformation3D()
+    tr.translation.y = -np.amin(m.vertices, axis=0)[1]
+    tr.translation.z = -5
+    tr.rotation_center.z = 0.2
+    texture = glutils.load_texture('brique.jpg')
+    o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr) <<<<<<<<<<<<< et on le retrouve là
+    viewer.add_object(o)
+
+
+Deux programmes graphiques différents : (c'était la de base)
+    1) On a du texte
+    2) On a du rendu 3D
+
+
+
+idée : suivi par un monstre
+idée : remplacer quelques murs par des mines/murs invisibles
+
+
+
+N=10 => 100 à 150 cubes
+=> 1000 faces
+enleve faces dessus/dessous
