@@ -30,4 +30,12 @@ idée : remplacer quelques murs par des mines/murs invisibles
 
 N=10 => 100 à 150 cubes
 => 1000 faces
-enleve faces dessus/dessous
+enleve faces dessus/dessous C'EST PAS LE NOMBRE DE FACES LE PB : ON PEUT LES REMPALCER PAR DES STEGOSAURUS CA CHANGE RIEN
+
+
+j'ai retiré texture et illumination de shader.frag : AUCUNE amélioration des FPS
+
+
+
+On va générer un seul objet 3D pour le laby
+en parallèle on va créer un objet arbre (ou plus grille) qui va contenir tout les murs du labyrinthe en 2D pour gérer les collisions

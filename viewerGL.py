@@ -12,7 +12,7 @@ from time import time
 class ViewerGL:
     def __init__(self):
 
-        PLEIN_ECRAN = False
+        PLEIN_ECRAN = True
         self.TEMPS = 60
 
         self.HEIGHT = 480
@@ -64,43 +64,39 @@ class ViewerGL:
         self.objs = []
         self.touch = {}
 
-        self.murs = []
-
         self.perso = None
 
-
-        
+        #SOURIS AU NATUREL
         if (glfw.raw_mouse_motion_supported()):
-            print("SOURIS AU NATUREL")
+            #print("SOURIS AU NATUREL")
             glfw.set_input_mode(self.window, glfw.RAW_MOUSE_MOTION, glfw.TRUE);
         
         
 
-
-
-
     def run(self):
         # boucle d'affichage
+
+        tps1 = time()
+
         while not glfw.window_should_close(self.window):
             # nettoyage de la fenêtre : fond et profondeur
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
             self.update_key()
-
             self.timer_update()
-
-            
 
             for obj in self.objs:
                 GL.glUseProgram(obj.program)
-                if isinstance(obj, Object3D) and random():
+                if isinstance(obj, Object3D):
                     self.update_camera(obj.program)
                 obj.draw()
 
-            # changement de buffer d'affichage pour éviter un effet de scintillement
+            # changement de buffer d'affichage pour éviter un effet de scintillement 
+            #The glfwSwapBuffers 4.4 One last thing 23 will swap the color buffer (a large 2D buffer that contains color values for each pixel in GLFW’s window) that is used to render to during this render iteration and show it as output to the screen.
             glfw.swap_buffers(self.window)
             # gestion des évènements
-            glfw.poll_events()
+            # The glfwPollEvents function checks if any events are triggered (like keyboard input or mouse movement events), updates the window state, and calls the corresponding functions (which we can register via callback methods).
+            glfw.poll_events() 
 
 
 
