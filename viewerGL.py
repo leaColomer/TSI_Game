@@ -12,7 +12,7 @@ from time import time
 class ViewerGL:
     def __init__(self):
 
-        PLEIN_ECRAN = True
+        PLEIN_ECRAN = False
         self.TEMPS = 60
 
         self.HEIGHT = 480

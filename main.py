@@ -6,10 +6,15 @@ import numpy as np
 import OpenGL.GL as GL
 import pyrr
 from time import time
-from gen_walls_3d_from_matrix import creer_laby_obj
+import gen_laby_mat
+import gen_laby_2d
+import gen_laby_3d
 
 def main():
     TAILLE_LABY = 10 #taille du labyrinthe
+    matrice_laby = gen_laby_mat.genere(TAILLE_LABY)
+    gen_laby_3d.nouveau_obj_laby(matrice_laby, 'laby.obj') #regenerer laby.obj
+    murs = gen_laby_2d.Murs()
 
     viewer = ViewerGL()
 
@@ -45,68 +50,16 @@ def main():
     viewer.add_object(o)
 
     #BIG MAZE COMME TEN AS JAMAIS VU V2
-
-    
-    creer_laby_obj(TAILLE_LABY, 'laby.obj') #regenerer laby.obj
     m = Mesh.load_obj('laby.obj')
-    #m.normalize()
-    #alpha = TAILLE_LABY + 0.09 #pas sur de la taille de l'objet avant normalisation
-    #m.apply_matrix(pyrr.matrix44.create_from_scale([alpha, alpha, alpha, 1]))
+    m.normalize()
+    alpha = TAILLE_LABY + 0.09 #pas sur de la taille de l'objet avant normalisation
+    m.apply_matrix(pyrr.matrix44.create_from_scale([alpha, alpha, alpha, 1]))
     vao = m.load_to_gpu()
     texture = glutils.load_texture('brique.jpg')
     tr = Transformation3D()
     tr.translation.y = 1
     o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.add_object(o)
-
-    # #BIG MAZE COMME TEN AS JAMAIS VU V1
-    # m = Mesh.load_obj('wall_creux.obj')
-    # m.normalize()
-    # m.apply_matrix(pyrr.matrix44.create_from_scale([1, 1, 1, 1]))
-    # vao = m.load_to_gpu()
-    # texture = glutils.load_texture('brique.jpg')
-
-    # matrice_laby = creation_laby.matrice_laby_alea(TAILLE_LABY)
-    # print(matrice_laby)
-    # for i in range(TAILLE_LABY+1):
-    #     for j in range(TAILLE_LABY+1):
-    #         tr = Transformation3D()
-    #         tr.rotation_center.x = 0
-    #         tr.rotation_center.y = 0
-    #         tr.rotation_center.z = 1
-    #         tr.translation.x = j*2
-    #         tr.translation.y = 1
-    #         tr.translation.z = i*2
-
-    #         e = matrice_laby[i][j]
-    #         if e == 0:
-    #             tr.rotation_euler[pyrr.euler.index().yaw] = -np.pi/2
-                
-    #             o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
-    #             viewer.murs.append(o)
-    #             viewer.add_object(o)
-    #         elif e == 3:
-    #             o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
-    #             viewer.murs.append(o)
-    #             viewer.add_object(o)
-    #         elif e == 1:
-    #             o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
-    #             viewer.murs.append(o)
-    #             viewer.add_object(o)
-                
-    #             tr = Transformation3D()
-    #             tr.rotation_center.x = 0
-    #             tr.rotation_center.y = 0
-    #             tr.rotation_center.z = 1
-    #             tr.translation.x = j*2
-    #             tr.translation.y = 1
-    #             tr.translation.z = i*2
-    #             tr.rotation_euler[pyrr.euler.index().yaw] = -np.pi/2
-                
-    #             o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
-    #             viewer.murs.append(o)
-    #             viewer.add_object(o)
-
 
     vao = Text.initalize_geometry()
     texture = glutils.load_texture('fontB.jpg')

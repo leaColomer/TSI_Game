@@ -1,6 +1,6 @@
 #
 import numpy as np
-from creation_laby import matrice_laby_alea
+from gen_laby_mat import gen_laby_mat
 
 
 
@@ -82,16 +82,12 @@ def maillage_vers_obj(m, chemin_fichier):
             #     f.write(" %d" % (i + 1))
             # f.write("\n")
 
-def creer_laby_2d(N):
-    return
-
-def creer_laby_obj(N, chemin_fichier):
-    matrice_laby = matrice_laby_alea(N)
+def nouveau_obj_laby(matrice_laby, chemin_fichier):
     print(np.array(matrice_laby))
     m = gen_maillage(matrice_laby)
-    return maillage_vers_obj(m, chemin_fichier)
+    maillage_vers_obj(m, chemin_fichier)
 
 if __name__ == '__main__':
-    creer_laby_obj(10,'laby.obj')
+    nouveau_obj_laby(10,'laby.obj')
 
     

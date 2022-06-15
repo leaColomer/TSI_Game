@@ -16,7 +16,8 @@ MOVE = {N: lambda x, y: (x, y-1),
  
 def chemins_aleatoire():
     return sample((N, S, E, W), 4)
- 
+
+#genere une matrice dont chaque element contient l'information de presence des 4 murs autour de lui
 def generation_laby(TAILLE):
     laby = [ [0]*TAILLE for _ in range(TAILLE)]
     dir_possibles = [(TAILLE//2, TAILLE//2, d) for d in chemins_aleatoire()]
@@ -31,6 +32,8 @@ def generation_laby(TAILLE):
  
     return laby
 
+#on reduit l'information aux murs superieur et gauche : ca permettra de generer les murs une seule fois plus tard
+#on ne perd evidemment pas d'information sur le laby global
 def convertion(laby1):
     t = len(laby1) + 1
     laby2 = [ [2]*t for _ in range(t)]
@@ -45,9 +48,9 @@ def convertion(laby1):
     return laby2
 
 
-def matrice_laby_alea(TAILLE):
-    lab = generation_laby(TAILLE)
-    return convertion(lab)
+def genere(TAILLE):
+    laby = generation_laby(TAILLE)
+    return convertion(laby)
 
 
 if __name__ == '__main__':
