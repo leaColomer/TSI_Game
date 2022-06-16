@@ -7,6 +7,7 @@ import pyrr
 import numpy as np
 from cpe3d import Object3D
 from time import time
+import collision
 
 
 class ViewerGL:
@@ -15,9 +16,13 @@ class ViewerGL:
         PLEIN_ECRAN = False
         self.TEMPS = 60
 
+        self.TAILLE_LABY = None
+
         self.HEIGHT = 480
         self.WIDTH = 640
+
         self.SENSI = 0.005
+        self.VITESSE = 0.10
         #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
         self.lastX, self.lastY = 0, 0
 
@@ -27,6 +32,10 @@ class ViewerGL:
 
         self.temps_origine = None
         self.timer_text_object = None
+
+        self.unite = None
+        self.rayon_perso = None
+        self.epaisseur_mur = None
 
 
 
@@ -65,6 +74,7 @@ class ViewerGL:
         self.touch = {}
 
         self.perso = None
+        self.murs = None
 
         #SOURIS AU NATUREL
         if (glfw.raw_mouse_motion_supported()):
@@ -115,6 +125,26 @@ class ViewerGL:
     def set_camera(self, cam):
         self.cam = cam
 
+
+    def collision_global(self, x, y, r):
+        contact = False
+        
+        i,j = int(x/self.unite), int(y/self.unite)
+        print(i,j)
+        if i<=self.TAILLE_LABY and j<=self.TAILLE_LABY:
+            murs_a_tester = self.murs.grille[i][j]
+            nb_murs = len(murs_a_tester)
+            k=0
+            while not contact and k<nb_murs:
+                mur = murs_a_tester[k]
+                cercle = collision.Cercle(x,y,r)
+                rectangle = mur
+                contact = collision.collision_cercle_rectangle(cercle,rectangle)
+                k+=1
+
+        return contact
+
+
     def update_camera(self, prog):
         GL.glUseProgram(prog)
         # Récupère l'identifiant de la variable pour le programme courant
@@ -147,18 +177,27 @@ class ViewerGL:
         GL.glUniformMatrix4fv(loc, 1, GL.GL_FALSE, self.cam.projection)
 
     def update_key(self):
+        deplacement = np.array([0.0,0.0,0.0])
         if glfw.KEY_W in self.touch and self.touch[glfw.KEY_W] > 0: #KEY Z
-            self.perso.transformation.translation += \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0, 0, 0.5]))
+            deplacement += [0.0, 0.0, 1.0]
         if glfw.KEY_S in self.touch and self.touch[glfw.KEY_S] > 0: #KEY S
-            self.perso.transformation.translation -= \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0, 0, 0.5]))
+            deplacement += [0.0, 0.0, -1.0]
         if glfw.KEY_A in self.touch and self.touch[glfw.KEY_A] > 0: #KEY Q
-            self.perso.transformation.translation += \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0.5, 0, 0]))
+            deplacement += [1.0, 0.0, 0.0]
         if glfw.KEY_D in self.touch and self.touch[glfw.KEY_D] > 0: #KEY D
-            self.perso.transformation.translation -= \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3([0.5, 0, 0]))
+            deplacement += [-1.0, 0.0, 0.0]
+        
+        deplacement *= float(self.VITESSE)
+        norm = np.linalg.norm(deplacement)
+        if norm>0:
+            deplacement = deplacement/norm
+
+        deplacement_oriente = pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3(deplacement))
+
+        nouv_coo = self.perso.transformation.translation + deplacement_oriente*self.VITESSE
+        
+        if not self.collision_global(nouv_coo[0], nouv_coo[2], self.rayon_perso):
+            self.perso.transformation.translation = nouv_coo
 
         if not(glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0):
             #self.cam.transformation.rotation_euler = self.perso.transformation.rotation_euler.copy() 

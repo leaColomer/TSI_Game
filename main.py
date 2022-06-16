@@ -11,12 +11,23 @@ import gen_laby_2d
 import gen_laby_3d
 
 def main():
-    TAILLE_LABY = 10 #taille du labyrinthe
-    matrice_laby = gen_laby_mat.genere(TAILLE_LABY)
-    gen_laby_3d.nouveau_obj_laby(matrice_laby, 'laby.obj') #regenerer laby.obj
-    murs = gen_laby_2d.Murs()
+    TAILLE_LABY = 10 #taille du cote du labyrinthe
+    
 
     viewer = ViewerGL()
+    viewer.TAILLE_LABY = TAILLE_LABY
+    
+    viewer.epaisseur_mur = 0.09
+    viewer.unite = 1 #longeur d'un mur OU PLUTOT D'UNE CASE DU LABY
+    
+    viewer.rayon_perso = 0.3 # 0.3*viewer.unite
+
+    matrice_laby = gen_laby_mat.genere(TAILLE_LABY)
+    gen_laby_3d.nouveau_obj_laby(matrice_laby, 'laby.obj', viewer.epaisseur_mur) #regenerer laby.obj
+    viewer.murs = gen_laby_2d.Murs(matrice_laby, viewer.epaisseur_mur, viewer.unite)
+
+
+
 
     viewer.set_camera(Camera())
     viewer.cam.transformation.translation.y = 1
@@ -28,15 +39,46 @@ def main():
     #personnage
     m = Mesh.load_obj('cube.obj')
     m.normalize()
-    m.apply_matrix(pyrr.matrix44.create_from_scale([0.5, 1, 0.5, 1]))
+    m.apply_matrix(pyrr.matrix44.create_from_scale([viewer.rayon_perso, 0.5, viewer.rayon_perso, 1]))
     tr = Transformation3D()
-    tr.translation.y = -np.amin(m.vertices, axis=0)[1]
-    tr.translation.z = -5
-    tr.rotation_center.z = 0.2
+    tr.translation.x = viewer.unite/2
+    tr.translation.y = viewer.unite/2
+    tr.translation.z = viewer.unite/2
+    #tr.rotation_center.z = 0.2
     texture = glutils.load_texture('stegosaurus.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.add_object(o)
     viewer.perso = o
+
+    #cube reperage
+    m = Mesh.load_obj('cube.obj')
+    m.normalize()
+    m.apply_matrix(pyrr.matrix44.create_from_scale([0.3, 0.3, 0.3, 1]))
+    vao = m.load_to_gpu()
+
+    tr = Transformation3D()
+    tr.translation.x = 0
+    tr.translation.y = 2
+    tr.translation.z = 0
+    texture = glutils.load_texture('red.jpg')
+    o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
+    viewer.add_object(o)
+    
+    tr = Transformation3D()
+    tr.translation.x = 1
+    tr.translation.y = 2
+    tr.translation.z = 0
+    texture = glutils.load_texture('blue.jpg')
+    o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
+    viewer.add_object(o)
+
+    tr = Transformation3D()
+    tr.translation.x = 0
+    tr.translation.y = 2
+    tr.translation.z = 1
+    texture = glutils.load_texture('chill.jpg')
+    o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
+    viewer.add_object(o)
 
     #sol
     m = Mesh()
@@ -52,24 +94,26 @@ def main():
     #BIG MAZE COMME TEN AS JAMAIS VU V2
     m = Mesh.load_obj('laby.obj')
     m.normalize()
-    alpha = TAILLE_LABY + 0.09 #pas sur de la taille de l'objet avant normalisation
+    alpha = TAILLE_LABY+1
     m.apply_matrix(pyrr.matrix44.create_from_scale([alpha, alpha, alpha, 1]))
     vao = m.load_to_gpu()
     texture = glutils.load_texture('brique.jpg')
     tr = Transformation3D()
-    tr.translation.y = 1
+    tr.translation.x = alpha//2
+    tr.translation.y = 0
+    tr.translation.z = alpha//2
     o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.add_object(o)
 
+
     vao = Text.initalize_geometry()
     texture = glutils.load_texture('fontB.jpg')
-    # o = Text('Bonjour les', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao, 2, programGUI_id, texture)
-    # viewer.add_object(o)
     #ARGS self, value, bottomLeft, topRight, vao, nb_triangle, program, texture
     o = Text('HUGO JTM', np.array([-0.15, 0.85], np.float32), np.array([0.15, 0.95], np.float32), vao, 2, programGUI_id, texture)
     viewer.add_object(o)
     viewer.set_timer(o,time())
 
+    #compteur de FPS
     o = Text('HUGO JTM', np.array([0.85, 0.85], np.float32), np.array([0.95, 0.95], np.float32), vao, 2, programGUI_id, texture)
     viewer.add_object(o)
     viewer.fps_text_object = o
