@@ -11,11 +11,11 @@ class Maillage():
         self.textures = [ [0, 0.25], [0.25, 0.25], [0.5, 0.25], [0.75, 0.25], [0.0, 0.5], [0.25, 0.5], [0.5, 0.5], [0.75, 0.5], [0.25, 0.75], [0.5, 0.75], [0.25, 1.0], [0.5,  1.0] ]
         self.nombre_murs = 0
 
-    def creer_mur(self, i, j, o, epaisseur):
+    def creer_mur(self, j, i, o, epaisseur):
         #coos d'un mur horizontal à l'origine
         e = epaisseur #epaisseur du mur
-        sommets_mur_g = [ [e, 0.0,  0.0], [e,  0.0,  e], [e,  1.0,  0.0], [e,  1.0,  e], [1.0,  0.0,  0.0], [1.0,  0.0,  e], [1.0,  1.0,  0.0], [1.0,  1.0,  e] ]
-        sommets_mur_h = [ [0.0, 0.0,  e], [e,  0.0,  e], [0.0,  1.0,  e], [e,  1.0,  e], [0.0,  0.0,  1.0], [e,  0.0,  1.0], [0.0,  1.0,  1.0], [e,  1.0,  1.0] ]
+        sommets_mur_h = [ [e, 0.0,  0.0], [e,  0.0,  e], [e,  1.0,  0.0], [e,  1.0,  e], [1.0,  0.0,  0.0], [1.0,  0.0,  e], [1.0,  1.0,  0.0], [1.0,  1.0,  e] ]
+        sommets_mur_g = [ [0.0, 0.0,  e], [e,  0.0,  e], [0.0,  1.0,  e], [e,  1.0,  e], [0.0,  0.0,  1.0], [e,  0.0,  1.0], [0.0,  1.0,  1.0], [e,  1.0,  1.0] ]
         faces_mur = [   [[1,9,2], [7,12,2], [5,10,2] ], [[1,9,2], [3,11,2], [7,12,2] ], [[1,5,4], [4,2,4], [3,1,4]] , [[1,5,4], [2,6,4], [4,2,4]], [[5,8,3], [7,4,3], [8,3,3]], [[5,8,3], [8,3,3], [6,7,3]], [[2,6,1], [6,7,1], [8,3,1]], [[2,6,1], [8,3,1], [4,2,1]]   ]
         nombre_face_mur = len(faces_mur)
         if o: #si c'est un mur horizontal
@@ -47,7 +47,7 @@ def gen_maillage(mat,e):
             elif mat[i][j] == 1:
                 m.creer_mur(i,j,0,e)
                 m.creer_mur(i,j,1,e)
-    print(m.nombre_murs)
+    print("Il y a ", m.nombre_murs, " murs dans le labyrinthe.")
     return m
 
 def maillage_vers_obj(m, chemin_fichier):
@@ -82,7 +82,7 @@ def maillage_vers_obj(m, chemin_fichier):
             # f.write("\n")
 
 def nouveau_obj_laby(matrice_laby, chemin_fichier, e):
-    print(np.array(matrice_laby))
+    #print(np.array(matrice_laby))
     m = gen_maillage(matrice_laby,e)
     maillage_vers_obj(m, chemin_fichier)
 

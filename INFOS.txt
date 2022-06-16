@@ -39,3 +39,8 @@ j'ai retiré texture et illumination de shader.frag : AUCUNE amélioration des F
 
 On va générer un seul objet 3D pour le laby
 en parallèle on va créer un objet arbre (ou plus grille) qui va contenir tout les murs du labyrinthe en 2D pour gérer les collisions
+
+
+
+ajouter des piliers pour les angles
+faire des tests x et y pour les collisions pour eviter de keblo

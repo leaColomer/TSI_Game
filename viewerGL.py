@@ -18,17 +18,22 @@ class ViewerGL:
 
         self.TAILLE_LABY = None
 
-        self.HEIGHT = 480
-        self.WIDTH = 640
+        self.HEIGHT = 600
+        self.WIDTH = 600
 
         self.SENSI = 0.005
-        self.VITESSE = 0.10
+        self.PAS_DE_DEPLACEMENT = 0.03
         #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
         self.lastX, self.lastY = 0, 0
+
+        self.i = 0
+        self.j = 0
 
         self.fps_last_time = 0
         self.fps_10_last = [0 for i in range(10)]
         self.fps_text_object = None
+
+        self.coos_text_object = None
 
         self.temps_origine = None
         self.timer_text_object = None
@@ -36,6 +41,9 @@ class ViewerGL:
         self.unite = None
         self.rayon_perso = None
         self.epaisseur_mur = None
+
+
+        self.murs = None
 
 
 
@@ -54,6 +62,7 @@ class ViewerGL:
         else:
             PLEIN_ECRAN_ = None
         self.window = glfw.create_window(self.WIDTH, self.HEIGHT, 'OpenGL', PLEIN_ECRAN_, None)
+        
         # paramétrage de la fonction de gestion des évènements
         glfw.set_key_callback(self.window, self.key_callback)
 
@@ -69,6 +78,7 @@ class ViewerGL:
         # choix de la couleur de fond
         GL.glClearColor(0.5, 0.6, 0.9, 1.0)
         print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
+
 
         self.objs = []
         self.touch = {}
@@ -94,6 +104,7 @@ class ViewerGL:
 
             self.update_key()
             self.timer_update()
+            self.coos_update()
 
             for obj in self.objs:
                 GL.glUseProgram(obj.program)
@@ -129,17 +140,22 @@ class ViewerGL:
     def collision_global(self, x, y, r):
         contact = False
         
-        i,j = int(x/self.unite), int(y/self.unite)
-        print(i,j)
-        if i<=self.TAILLE_LABY and j<=self.TAILLE_LABY:
+        maxim = len(self.murs.grille[0])
+        
+        j = int(x/self.unite)
+        i = int(y/self.unite)
+
+        if 0<=i<maxim and 0<=j<maxim:
             murs_a_tester = self.murs.grille[i][j]
+            #murs_a_tester = self.test
+
             nb_murs = len(murs_a_tester)
             k=0
             while not contact and k<nb_murs:
                 mur = murs_a_tester[k]
                 cercle = collision.Cercle(x,y,r)
-                rectangle = mur
-                contact = collision.collision_cercle_rectangle(cercle,rectangle)
+                re = collision.Rectangle(x,y,0.3,0.3)
+                contact = collision.collision_cercle_rectangle(cercle,mur)
                 k+=1
 
         return contact
@@ -187,14 +203,13 @@ class ViewerGL:
         if glfw.KEY_D in self.touch and self.touch[glfw.KEY_D] > 0: #KEY D
             deplacement += [-1.0, 0.0, 0.0]
         
-        deplacement *= float(self.VITESSE)
         norm = np.linalg.norm(deplacement)
         if norm>0:
             deplacement = deplacement/norm
 
         deplacement_oriente = pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3(deplacement))
 
-        nouv_coo = self.perso.transformation.translation + deplacement_oriente*self.VITESSE
+        nouv_coo = self.perso.transformation.translation + deplacement_oriente*self.PAS_DE_DEPLACEMENT
         
         if not self.collision_global(nouv_coo[0], nouv_coo[2], self.rayon_perso):
             self.perso.transformation.translation = nouv_coo
@@ -203,7 +218,7 @@ class ViewerGL:
             #self.cam.transformation.rotation_euler = self.perso.transformation.rotation_euler.copy() 
             #self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
             self.cam.transformation.rotation_center = self.perso.transformation.translation + self.perso.transformation.rotation_center
-            self.cam.transformation.translation = self.perso.transformation.translation + pyrr.Vector3([0, 1, 4])
+            self.cam.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0.2])
 
     def mouse_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
 
@@ -238,6 +253,11 @@ class ViewerGL:
     def timer_update(self):
         self.timer_text_object.value = str(self.TEMPS + self.temps_origine - time())[:4]
 
+    def coos_update(self):
+        coos = self.perso.transformation.translation
+        self.i = int(coos[0]/self.unite)
+        self.j = int(coos[2]/self.unite)
+        self.coos_text_object.value = str(self.i) + ' ' + str(self.j)
 
     def update_fps(self):
         self.fps_10_last.append(1/(time() - self.fps_last_time))

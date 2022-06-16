@@ -18,9 +18,12 @@ class Rectangle():
         self.y = y
         self.l = l
         self.h = h
+    
+    def aff(self):
+        print("rectangle : x=", self.x, " y=", self.y, " l=", self.l," h=", self.h)
 
 
-def collision_rectangle_rectangle(r1,r2):
+def collision_rectangle_rectangle(r1,r2): #rectangles oriente selon les axes
     if( (r2.x >= r1.x + r1.l) or (r2.x + r2.l <= r1.x) or(r2.y >= r1.y + r1.h) or (r2.y + r2.h <= r1.y) ):
         return False
     else:
