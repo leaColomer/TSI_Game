@@ -139,22 +139,17 @@ class ViewerGL:
 
     def collision_global(self, x, y, r):
         contact = False
-        
         maxim = len(self.murs.grille[0])
-        
         j = int(x/self.unite)
         i = int(y/self.unite)
 
         if 0<=i<maxim and 0<=j<maxim:
             murs_a_tester = self.murs.grille[i][j]
-            #murs_a_tester = self.test
-
             nb_murs = len(murs_a_tester)
             k=0
             while not contact and k<nb_murs:
                 mur = murs_a_tester[k]
                 cercle = collision.Cercle(x,y,r)
-                re = collision.Rectangle(x,y,0.3,0.3)
                 contact = collision.collision_cercle_rectangle(cercle,mur)
                 k+=1
 
@@ -209,10 +204,17 @@ class ViewerGL:
 
         deplacement_oriente = pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3(deplacement))
 
-        nouv_coo = self.perso.transformation.translation + deplacement_oriente*self.PAS_DE_DEPLACEMENT
+        coo = self.perso.transformation.translation
+        nouv_coo = coo + deplacement_oriente*self.PAS_DE_DEPLACEMENT
         
-        if not self.collision_global(nouv_coo[0], nouv_coo[2], self.rayon_perso):
-            self.perso.transformation.translation = nouv_coo
+        if not self.collision_global(coo.x, nouv_coo.z, self.rayon_perso):
+            coo.z += (deplacement_oriente*self.PAS_DE_DEPLACEMENT)[2]
+            self.perso.transformation.translation = coo
+        
+        if not self.collision_global(nouv_coo.x, coo.z, self.rayon_perso):
+            coo.x += (deplacement_oriente*self.PAS_DE_DEPLACEMENT)[0]
+            self.perso.transformation.translation = coo
+            
 
         if not(glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0):
             #self.cam.transformation.rotation_euler = self.perso.transformation.rotation_euler.copy() 
