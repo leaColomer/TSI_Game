@@ -58,6 +58,8 @@ def genere(TAILLE):
     mat, longueur, [x,y] = generation_laby(TAILLE)
     return convertion(mat), longueur, [x,y]
 
+
+#genere un laby dont la solution est de taille renseignee
 def genere_spe(TAILLE,longueur_chem_parf,e_max):
     ecart = e_max + 1
     while ecart > e_max:

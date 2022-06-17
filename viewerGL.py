@@ -5,18 +5,30 @@ import OpenGL.GL as GL
 import glfw
 import pyrr
 import numpy as np
-from cpe3d import Object3D
+from cpe3d import Object3D, Camera
 from time import time, sleep
 import collision
+
+import objets_ini
+import gen_laby_mat
+import gen_laby_2d
+import gen_laby_3d
 
 
 class ViewerGL:
     def __init__(self):
 
+        self.scene = 0
+
         PLEIN_ECRAN = False
         self.TEMPS = 60
+        
+
+        self.TRICHE = None
 
         self.TAILLE_LABY = None
+
+        self.premiere_partie = True
 
         self.HEIGHT = 600
         self.WIDTH = 600
@@ -28,17 +40,19 @@ class ViewerGL:
 
         self.i = 0
         self.j = 0
+        
 
         self.dernier_temps = 0
-        self.fps_10_last = [0 for i in range(10)]
+        self.fps_10_last = [0 for _ in range(10)]
         self.fps_text_object = None
         self.compteur_80f = 0
         self.overload_text_object = None
 
         self.coos_text_object = None
 
-        self.temps_zero = None
         self.temps_depart = None
+        self.temps_pause = 0
+        self.temps_pause_ini = None
         self.timer_text_object = None
 
         self.unite = None
@@ -47,6 +61,11 @@ class ViewerGL:
 
 
         self.murs = None
+
+        self.x_fin = None
+        self.y_fin = None
+
+        self.LONGUEUR_CHEMIN_PARFAIT = None
 
 
 
@@ -69,10 +88,6 @@ class ViewerGL:
         # paramétrage de la fonction de gestion des évènements
         glfw.set_key_callback(self.window, self.key_callback)
 
-    	#leo gestion souris
-        glfw.set_cursor_pos_callback(self.window, self.mouse_callback )
-        glfw.set_input_mode(self.window, glfw.CURSOR, glfw.CURSOR_DISABLED)
-
         # activation du context OpenGL pour la fenêtre
         glfw.make_context_current(self.window)
         glfw.swap_interval(1)
@@ -82,55 +97,71 @@ class ViewerGL:
         GL.glClearColor(0.5, 0.6, 0.9, 1.0)
         print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
 
+        glfw.set_mouse_button_callback(self.window, self.clic_callback)
 
         self.objs = []
+        self.objs_r = []
+        self.objs_menu = []
         self.touch = {}
 
         self.perso = None
         self.murs = None
+
+        self.set_camera(Camera())
 
         #SOURIS AU NATUREL
         if (glfw.raw_mouse_motion_supported()):
             #print("SOURIS AU NATUREL")
             glfw.set_input_mode(self.window, glfw.RAW_MOUSE_MOTION, glfw.TRUE);
         
-        
+    def clic_callback(self,window,b,up,d):
+        if self.scene == 0 and up:
+            x , y = glfw.get_cursor_pos(self.window)
+            x = (x-self.WIDTH/2)/self.WIDTH*2
+            y = (-y+self.HEIGHT/2)/self.HEIGHT*2
+            b_play = self.objs_menu[0]
+            b_re = self.objs_menu[1]
+            b_quit = self.objs_menu[2]
+            if b_play.bottomLeft[0]<x<b_play.topRight[0] and b_play.bottomLeft[1]<y<b_play.topRight[1]:
+                self.scene = 1
+                self.nvlle_partie()
+            if b_re.bottomLeft[0]<x<b_re.topRight[0] and b_re.bottomLeft[1]<y<b_re.topRight[1]:
+                if not self.premiere_partie:
+                    self.scene = 1
+                    self.reprendre_partie()
+            if b_quit.bottomLeft[0]<x<b_quit.topRight[0] and b_quit.bottomLeft[1]<y<b_quit.topRight[1]:
+                glfw.set_window_should_close(self.window, glfw.TRUE)
 
-    def run(self):
-        # boucle d'affichage
+    def nvlle_partie(self):
 
-        tps1 = time()
+        self.perso.transformation.translation.x = self.unite/2 + self.TAILLE_LABY//2
+        self.perso.transformation.translation.y = self.unite/5 + self.TRICHE*3
+        self.perso.transformation.translation.z = self.unite/2 + self.TAILLE_LABY//2
 
-        while not glfw.window_should_close(self.window):
-            # nettoyage de la fenêtre : fond et profondeur
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        matrice_laby, _, [self.x_fin,self.y_fin] = gen_laby_mat.genere_spe(self.TAILLE_LABY,self.LONGUEUR_CHEMIN_PARFAIT,0) # 0 erreur. le chemin parf fait exactement 97(x) cases de long
+        gen_laby_3d.nouveau_obj_laby(matrice_laby, 'laby.obj', self.epaisseur_mur) #regenerer laby.obj
+        self.murs = gen_laby_2d.Murs(matrice_laby, self.epaisseur_mur, self.unite)
 
-            self.update_key()
-            self.timer_update()
-            self.coos_update()
+        if not self.premiere_partie:
+            self.objs_r = [] #on suppr l ancien laby et ses objets
+        else:
+            self.premiere_partie = False
 
-            for obj in self.objs:
-                GL.glUseProgram(obj.program)
-                if isinstance(obj, Object3D):
-                    self.update_camera(obj.program)
-                obj.draw()
+        objets_ini.creer_big_maze(self)
 
-            # changement de buffer d'affichage pour éviter un effet de scintillement 
-            #The glfwSwapBuffers 4.4 One last thing 23 will swap the color buffer (a large 2D buffer that contains color values for each pixel in GLFW’s window) that is used to render to during this render iteration and show it as output to the screen.
-            glfw.swap_buffers(self.window)
-            # gestion des évènements
-            # The glfwPollEvents function checks if any events are triggered (like keyboard input or mouse movement events), updates the window state, and calls the corresponding functions (which we can register via callback methods).
-            glfw.poll_events() 
+        self.temps_depart = time()
+        self.temps_pause = 0
+
+    def reprendre_partie(self):
+        self.temps_pause += time() - self.temps_pause_ini
+        print(self.temps_pause)
 
 
-
-            self.update_fps()
-
-        
     def key_callback(self, win, key, scancode, action, mods):
-        # sortie du programme si appui sur la touche 'échappement'
+        # retour au menu si appui sur la touche 'échappement'
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
-            glfw.set_window_should_close(win, glfw.TRUE)
+            self.temps_pause_ini = time()
+            self.scene = 0
         self.touch[key] = action
     
     def add_object(self, obj):
@@ -231,13 +262,7 @@ class ViewerGL:
             self.cam.transformation.rotation_center = self.perso.transformation.translation + self.perso.transformation.rotation_center
             self.cam.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0.2])
 
-    def mouse_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
-
-        # if first_mouse:
-        #     lastX = xpos
-        #     lastY = ypos
-        #     first_mouse = False
-
+    def mouse_partie_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
 
         xoffset = (xpos - self.lastX)*self.SENSI
         yoffset = (ypos - self.lastY)*self.SENSI
@@ -256,13 +281,8 @@ class ViewerGL:
         self.perso.transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
 
 
-    def set_timer(self, timer, t):
-        self.timer_text_object = timer
-        self.temps_depart = t
-
-
     def timer_update(self):
-        temps = self.TEMPS + self.temps_depart - time()
+        temps = self.TEMPS + self.temps_depart - time() + self.temps_pause #temps imaprti 60s + time.depart - time.actuel
         self.timer_text_object.value = str(temps)[:4]
         if temps<0.1*self.TEMPS:
             self.timer_text_object.bottomLeft = np.array([-0.25, 0.70], np.float32)
@@ -271,13 +291,13 @@ class ViewerGL:
         #teleportation du joueur au centre a la fin du compteur
         if temps<0:
             self.temps_depart = time()
-            self.perso.transformation.translation = pyrr.Vector3([self.unite/2 + self.TAILLE_LABY//2, 0.0, self.unite/2 + self.TAILLE_LABY//2])
+            self.perso.transformation.translation = pyrr.Vector3([self.unite/2 + self.TAILLE_LABY//2, self.unite/5 + self.TRICHE*3, self.unite/2 + self.TAILLE_LABY//2])
 
 
     def coos_update(self):
         coos = self.perso.transformation.translation
-        self.i = int(coos[0]/self.unite)
-        self.j = int(coos[2]/self.unite)
+        self.i = int(coos[0]/self.unite) - self.TAILLE_LABY//2
+        self.j = int(coos[2]/self.unite) - self.TAILLE_LABY//2
         self.coos_text_object.value = '(' + str(self.i) + ',' + str(self.j) + ')'
 
     def update_fps(self):
@@ -304,5 +324,59 @@ class ViewerGL:
         elif self.compteur_80f!=0 :
             self.compteur_80f = 0
             self.overload_text_object.value = " "
+
+    def run_menu(self):
+        #self.scene = 1
+        # nettoyage de la fenêtre : fond et profondeur
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        for obj in self.objs_menu:
+            GL.glUseProgram(obj.program)
+            obj.draw()
+        
+        glfw.swap_buffers(self.window)
+        glfw.poll_events() 
+
+
+    def run_partie(self):
+        # nettoyage de la fenêtre : fond et profondeur
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
+        self.update_key()
+        self.timer_update()
+        self.coos_update()
+
+        for obj in (self.objs_r + self.objs):
+            GL.glUseProgram(obj.program)
+            if isinstance(obj, Object3D):
+                self.update_camera(obj.program)
+            obj.draw()
+
+        # changement de buffer d'affichage pour éviter un effet de scintillement 
+        #The glfwSwapBuffers 4.4 One last thing 23 will swap the color buffer (a large 2D buffer that contains color values for each pixel in GLFW’s window) that is used to render to during this render iteration and show it as output to the screen.
+        glfw.swap_buffers(self.window)
+        # gestion des évènements
+        # The glfwPollEvents function checks if any events are triggered (like keyboard input or mouse movement events), updates the window state, and calls the corresponding functions (which we can register via callback methods).
+        glfw.poll_events() 
+
+
+
+        self.update_fps()
+        
+    def run(self):
+
+        while not glfw.window_should_close(self.window):
+            
+            glfw.set_input_mode(self.window, glfw.CURSOR, glfw.CURSOR_NORMAL)
+
+            while not glfw.window_should_close(self.window) and self.scene == 0:
+                
+                self.run_menu()
+            
+            #on remet la fonc de callback mouse + desactive le curseur
+            glfw.set_cursor_pos_callback(self.window, self.mouse_partie_callback )
+            glfw.set_input_mode(self.window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+
+            while not glfw.window_should_close(self.window) and self.scene == 1:
+                self.run_partie()
 
         

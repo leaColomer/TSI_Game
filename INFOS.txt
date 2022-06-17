@@ -60,9 +60,17 @@ changer les textures
 
 ajouter une fin
 => faire une recherche dans la mat pour un chemin
-=> enlever le mur de fin
+=> enlever le mur de fin ?
 => dessiner la salle de fin ?
 
 ajouter une interaction avec un objet : interupteur/bouton qui ouvre porte
 
 deuxieme timer apprentissage du labyrinthe
+
+vue qui se brouille durant les dernière secondes
+
+ya un test de performance qui indique un msg d erreur si fps<20
+
+la cam tourne dans le menu ?
+
+ecran de chargement avant et post menu ?
