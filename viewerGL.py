@@ -6,7 +6,7 @@ import glfw
 import pyrr
 import numpy as np
 from cpe3d import Object3D
-from time import time
+from time import time, sleep
 import collision
 
 
@@ -22,20 +22,23 @@ class ViewerGL:
         self.WIDTH = 600
 
         self.SENSI = 0.005
-        self.PAS_DE_DEPLACEMENT = 0.03
+        self.PAS_DE_DEPLACEMENT = 1.5 # case par seconde
         #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
         self.lastX, self.lastY = 0, 0
 
         self.i = 0
         self.j = 0
 
-        self.fps_last_time = 0
+        self.dernier_temps = 0
         self.fps_10_last = [0 for i in range(10)]
         self.fps_text_object = None
+        self.compteur_80f = 0
+        self.overload_text_object = None
 
         self.coos_text_object = None
 
-        self.temps_origine = None
+        self.temps_zero = None
+        self.temps_depart = None
         self.timer_text_object = None
 
         self.unite = None
@@ -205,14 +208,20 @@ class ViewerGL:
         deplacement_oriente = pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.perso.transformation.rotation_euler), pyrr.Vector3(deplacement))
 
         coo = self.perso.transformation.translation
-        nouv_coo = coo + deplacement_oriente*self.PAS_DE_DEPLACEMENT
+
+        fps = self.fps_10_last[9]
+        if fps>20:
+            vitesse = self.PAS_DE_DEPLACEMENT/fps
+        else:
+            vitesse = self.PAS_DE_DEPLACEMENT/20
+        nouv_coo = coo + deplacement_oriente*vitesse
         
         if not self.collision_global(coo.x, nouv_coo.z, self.rayon_perso):
-            coo.z += (deplacement_oriente*self.PAS_DE_DEPLACEMENT)[2]
+            coo.z += (deplacement_oriente*vitesse)[2]
             self.perso.transformation.translation = coo
         
         if not self.collision_global(nouv_coo.x, coo.z, self.rayon_perso):
-            coo.x += (deplacement_oriente*self.PAS_DE_DEPLACEMENT)[0]
+            coo.x += (deplacement_oriente*vitesse)[0]
             self.perso.transformation.translation = coo
             
 
@@ -247,21 +256,53 @@ class ViewerGL:
         self.perso.transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
 
 
-    def set_timer(self, timer, temps_origine):
+    def set_timer(self, timer, t):
         self.timer_text_object = timer
-        self.temps_origine = temps_origine
+        self.temps_depart = t
 
 
     def timer_update(self):
-        self.timer_text_object.value = str(self.TEMPS + self.temps_origine - time())[:4]
+        temps = self.TEMPS + self.temps_depart - time()
+        self.timer_text_object.value = str(temps)[:4]
+        if temps<0.1*self.TEMPS:
+            self.timer_text_object.bottomLeft = np.array([-0.25, 0.70], np.float32)
+            self.timer_text_object.topRight = np.array([0.35, 0.95], np.float32)
+        
+        #teleportation du joueur au centre a la fin du compteur
+        if temps<0:
+            self.temps_depart = time()
+            self.perso.transformation.translation = pyrr.Vector3([self.unite/2 + self.TAILLE_LABY//2, 0.0, self.unite/2 + self.TAILLE_LABY//2])
+
 
     def coos_update(self):
         coos = self.perso.transformation.translation
         self.i = int(coos[0]/self.unite)
         self.j = int(coos[2]/self.unite)
-        self.coos_text_object.value = str(self.i) + ' ' + str(self.j)
+        self.coos_text_object.value = '(' + str(self.i) + ',' + str(self.j) + ')'
 
     def update_fps(self):
-        self.fps_10_last.append(1/(time() - self.fps_last_time))
-        self.fps_text_object.value = str(np.average(self.fps_10_last))[:2]
-        self.fps_last_time = time()
+        temps = time()
+        delta = (temps - self.dernier_temps)
+
+        fps = 1/delta
+        self.fps_10_last.append(fps)
+        self.fps_10_last.pop(0)
+        
+
+        self.dernier_temps = temps
+        self.fps_text_object.value = str(np.average(self.fps_10_last))[:2] + 'FPS'
+
+        
+        if fps<20:
+            if self.compteur_80f<10:
+                self.overload_text_object.value = "Performances reduites"
+            else:
+                self.overload_text_object.value = " "
+            if self.compteur_80f==0:
+                self.compteur_80f = 20
+            self.compteur_80f-=1
+        elif self.compteur_80f!=0 :
+            self.compteur_80f = 0
+            self.overload_text_object.value = " "
+
+        

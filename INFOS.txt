@@ -35,10 +35,11 @@ enleve faces dessus/dessous C'EST PAS LE NOMBRE DE FACES LE PB : ON PEUT LES REM
 
 j'ai retiré texture et illumination de shader.frag : AUCUNE amélioration des FPS
 
-
-
 On va générer un seul objet 3D pour le laby
 en parallèle on va créer un objet arbre (ou plus grille) qui va contenir tout les murs du labyrinthe en 2D pour gérer les collisions
+
+
+
 
 reflexion sur les changements de scenes ? (menu, pause...etc)
 
@@ -62,4 +63,6 @@ ajouter une fin
 => enlever le mur de fin
 => dessiner la salle de fin ?
 
+ajouter une interaction avec un objet : interupteur/bouton qui ouvre porte
 
+deuxieme timer apprentissage du labyrinthe

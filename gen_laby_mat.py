@@ -4,6 +4,7 @@
 
 #on sauvegarde le laby dans une matrice ou chaque case indique si il y a un mur a gauche, en haut ou les deux
 
+from lib2to3.pytree import convert
 from random import sample
 import numpy as np
  
@@ -20,19 +21,24 @@ def chemins_aleatoire():
 #genere une matrice dont chaque element contient l'information de presence des 4 murs autour de lui
 def generation_laby(TAILLE):
     laby = [ [0]*TAILLE for _ in range(TAILLE)]
-    dir_possibles = [(TAILLE//2, TAILLE//2, d) for d in chemins_aleatoire()]
+    dir_possibles = [(TAILLE//2, TAILLE//2, N, 0)]
+
+    case_finale = [TAILLE//2, TAILLE//2]
+    longueur_max = 0
  
     while dir_possibles:
-        x, y, way = dir_possibles.pop()
-        x_svnt, y_svnt = MOVE[way](x, y)
+        x, y, dir, dist = dir_possibles.pop()
+        x_svnt, y_svnt = MOVE[dir](x, y)
         if 0 <= y_svnt < TAILLE and 0 <= x_svnt < TAILLE and laby[y_svnt][x_svnt] == 0: #si la case suivante ne donne pas sur un couloir deja creuse ET si on ne sort pas du laby
-            laby[y][x] |= way
-            laby[y_svnt][x_svnt] |= OPPOSITE[way]
-            dir_possibles += [(x_svnt, y_svnt, d) for d in chemins_aleatoire()] #on ajoute les 4 dir possibles de la case suivante
- 
-    return laby
+            laby[y][x] |= dir
+            laby[y_svnt][x_svnt] |= OPPOSITE[dir]
+            dir_possibles += [(x_svnt, y_svnt, d, dist+1) for d in chemins_aleatoire()] #on ajoute les 4 dir possibles de la case suivante
+        if longueur_max < dist+1:
+            longueur_max = dist+1
+            case_finale = [x, y]
+    return laby, longueur_max, case_finale
 
-#on reduit l'information aux murs superieur et gauche : ca permettra de generer les murs une seule fois plus tard
+#on reduit l'information aux murs superieur et gauche par case : ca permettra de generer les murs une seule fois plus tard
 #on ne perd evidemment pas d'information sur le laby global
 def convertion(laby1):
     t = len(laby1) + 1
@@ -49,13 +55,26 @@ def convertion(laby1):
 
 
 def genere(TAILLE):
-    laby = generation_laby(TAILLE)
-    return convertion(laby)
+    mat, longueur, [x,y] = generation_laby(TAILLE)
+    return convertion(mat), longueur, [x,y]
 
+def genere_spe(TAILLE,longueur_chem_parf,e_max):
+    ecart = e_max + 1
+    while ecart > e_max:
+        mat, longueur, [x,y] = generation_laby(TAILLE)
+        ecart = abs(longueur_chem_parf-longueur)
+    return convertion(mat), longueur, [x,y]
 
 if __name__ == '__main__':
+    res = []
+    for _ in range(100):
+        mat, longueur, [x,y] = generation_laby(14)
+        res.append(longueur)
+    print(np.average(res))
+    print(np.std(res))
 
-    laby = generation_laby(9)
+    # print(np.array(mat))
+    
+    # print(np.array(convertion(mat)))
 
-    print(np.array(laby))
-    print(np.array(convertion(laby)))
+    # print('longueur max = ', longueur, x, y)
