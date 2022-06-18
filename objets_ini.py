@@ -33,6 +33,19 @@ def initialisation(viewer):
     
     program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
     programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
+    program3d_sky_id = glutils.create_program_from_file('shader.vert', 'sky.frag') #frag sans illumination
+
+    #skybox
+    m = Mesh.load_obj('cube_skybox.obj')
+    m.normalize()
+    m.apply_matrix(pyrr.matrix44.create_from_scale([50, 30, 50]))
+    tr = Transformation3D()
+    tr.translation.x = viewer.TAILLE_LABY//2
+    tr.translation.y = 30-0.5
+    tr.translation.z = viewer.TAILLE_LABY//2
+    texture = glutils.load_texture('tex/sky2.jpg')
+    o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_sky_id, texture, tr)
+    viewer.add_object(o)
 
     #personnage
     m = Mesh.load_obj('cylindre.obj')

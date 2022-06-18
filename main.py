@@ -6,7 +6,7 @@ def main():
 
     viewer.TRICHE = 0 # 0 pas de triche, 1 triche
 
-    viewer.TAILLE_LABY = 14 #taille du cote du labyrinthe
+    viewer.TAILLE_LABY = 14 #taille du cote du labyrinthe  
     viewer.LONGUEUR_CHEMIN_PARFAIT = 97 #chemin de 97 cases c'est bien pour 60s
     viewer.epaisseur_mur = 0.09
     viewer.unite = 1 #longeur d'un mur OU PLUTOT D'UNE CASE DU LABY

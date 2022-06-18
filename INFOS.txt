@@ -2,42 +2,19 @@ Reutilisation intelligente d'objets :
 vertex array object VAO c'est puissant
 vertex buffer object
 
-
-    #deuxieme mur de leo
-    m = Mesh.load_obj('mur.obj')
-    vao = m.load_to_gpu()           <<<<<<<<<<<<< Charger au gpu une seule fois, et comme ça on peut dupliquer l'objet
-    m.normalize()
-    m.apply_matrix(pyrr.matrix44.create_from_scale([2, 2, 2, 1]))
-    tr = Transformation3D()
-    tr.translation.y = -np.amin(m.vertices, axis=0)[1]
-    tr.translation.z = -5
-    tr.rotation_center.z = 0.2
-    texture = glutils.load_texture('brique.jpg')
-    o = Object3D(vao, m.get_nb_triangles(), program3d_id, texture, tr) <<<<<<<<<<<<< et on le retrouve là
-    viewer.add_object(o)
-
-
 Deux programmes graphiques différents : (c'était la de base)
     1) On a du texte
     2) On a du rendu 3D
 
 
-
-idée : suivi par un monstre
-idée : remplacer quelques murs par des mines/murs invisibles
-
-
-
+Prob performances
 N=10 => 100 à 150 cubes
 => 1000 faces
 enleve faces dessus/dessous C'EST PAS LE NOMBRE DE FACES LE PB : ON PEUT LES REMPALCER PAR DES STEGOSAURUS CA CHANGE RIEN
-
-
 j'ai retiré texture et illumination de shader.frag : AUCUNE amélioration des FPS
-
+SOLUTION:
 On va générer un seul objet 3D pour le laby
-en parallèle on va créer un objet arbre (ou plus grille) qui va contenir tout les murs du labyrinthe en 2D pour gérer les collisions
-
+en parallèle on va créer un objet arbre (ou plutot grille) qui va contenir tout les murs du labyrinthe en 2D pour gérer les collisions
 
 
 
@@ -51,8 +28,6 @@ clique option:
 
 Menu:
     nouvelle partie (difficulte ?)
-
-
 
 ajouter des piliers pour les angles
 
@@ -74,3 +49,9 @@ ya un test de performance qui indique un msg d erreur si fps<20
 la cam tourne dans le menu ?
 
 ecran de chargement avant et post menu ?
+
+ombre du soleil
+
+suivi par un monstre
+
+remplacer quelques murs par des mines/murs invisibles

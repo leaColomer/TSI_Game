@@ -154,7 +154,6 @@ class ViewerGL:
 
     def reprendre_partie(self):
         self.temps_pause += time() - self.temps_pause_ini
-        print(self.temps_pause)
 
 
     def key_callback(self, win, key, scancode, action, mods):
@@ -272,7 +271,7 @@ class ViewerGL:
 
         roll = self.cam.transformation.rotation_euler[pyrr.euler.index().roll]
     
-        if roll+yoffset >= -0.2 and roll+yoffset <= 1:
+        if roll+yoffset >= -0.5 and roll+yoffset <= 1:
             self.cam.transformation.rotation_euler[pyrr.euler.index().roll] += yoffset
 
         self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += xoffset
