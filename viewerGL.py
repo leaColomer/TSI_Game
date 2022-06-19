@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from random import random
+import glutils
 import OpenGL.GL as GL
 import glfw
 import pyrr
@@ -34,7 +34,7 @@ class ViewerGL:
         self.WIDTH = 600
 
         self.SENSI = 0.005
-        self.PAS_DE_DEPLACEMENT = 1.5 # case par seconde
+        self.VITESSE = 1.5 # case par seconde
         #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
         self.lastX, self.lastY = 0, 0
 
@@ -50,10 +50,12 @@ class ViewerGL:
 
         self.coos_text_object = None
 
+        self.temps_origine = None
         self.temps_depart = None
         self.temps_pause = 0
         self.temps_pause_ini = None
         self.timer_text_object = None
+        self.timer2_text_object = None
 
         self.unite = None
         self.rayon_perso = None
@@ -67,6 +69,7 @@ class ViewerGL:
 
         self.LONGUEUR_CHEMIN_PARFAIT = None
 
+        self.load_screen = None
 
 
 
@@ -102,6 +105,7 @@ class ViewerGL:
         self.objs = []
         self.objs_r = []
         self.objs_menu = []
+        self.objs_fin = []
         self.touch = {}
 
         self.perso = None
@@ -124,6 +128,7 @@ class ViewerGL:
             b_quit = self.objs_menu[2]
             if b_play.bottomLeft[0]<x<b_play.topRight[0] and b_play.bottomLeft[1]<y<b_play.topRight[1]:
                 self.scene = 1
+                self.chargement()
                 self.nvlle_partie()
             if b_re.bottomLeft[0]<x<b_re.topRight[0] and b_re.bottomLeft[1]<y<b_re.topRight[1]:
                 if not self.premiere_partie:
@@ -131,6 +136,13 @@ class ViewerGL:
                     self.reprendre_partie()
             if b_quit.bottomLeft[0]<x<b_quit.topRight[0] and b_quit.bottomLeft[1]<y<b_quit.topRight[1]:
                 glfw.set_window_should_close(self.window, glfw.TRUE)
+        if self.scene == 2 and up:
+            x , y = glfw.get_cursor_pos(self.window)
+            x = (x-self.WIDTH/2)/self.WIDTH*2
+            y = (-y+self.HEIGHT/2)/self.HEIGHT*2
+            btn = self.objs_fin[0]
+            if btn.bottomLeft[0]<x<btn.topRight[0] and btn.bottomLeft[1]<y<btn.topRight[1]:
+                self.scene = 0
 
     def nvlle_partie(self):
 
@@ -150,6 +162,7 @@ class ViewerGL:
         objets_ini.creer_big_maze(self)
 
         self.temps_depart = time()
+        self.temps_origine = time()
         self.temps_pause = 0
 
     def reprendre_partie(self):
@@ -241,17 +254,17 @@ class ViewerGL:
 
         fps = self.fps_10_last[9]
         if fps>20:
-            vitesse = self.PAS_DE_DEPLACEMENT/fps
+            pas_de_deplacmeent = self.VITESSE/fps
         else:
-            vitesse = self.PAS_DE_DEPLACEMENT/20
-        nouv_coo = coo + deplacement_oriente*vitesse
+            pas_de_deplacmeent = self.VITESSE/20
+        nouv_coo = coo + deplacement_oriente*pas_de_deplacmeent
         
         if not self.collision_global(coo.x, nouv_coo.z, self.rayon_perso):
-            coo.z += (deplacement_oriente*vitesse)[2]
+            coo.z += (deplacement_oriente*pas_de_deplacmeent)[2]
             self.perso.transformation.translation = coo
         
         if not self.collision_global(nouv_coo.x, coo.z, self.rayon_perso):
-            coo.x += (deplacement_oriente*vitesse)[0]
+            coo.x += (deplacement_oriente*pas_de_deplacmeent)[0]
             self.perso.transformation.translation = coo
             
 
@@ -280,12 +293,19 @@ class ViewerGL:
         self.perso.transformation.rotation_euler[pyrr.euler.index().yaw] = self.cam.transformation.rotation_euler[pyrr.euler.index().yaw]+np.pi
 
 
-    def timer_update(self):
+    def timers_update(self):
         temps = self.TEMPS + self.temps_depart - time() + self.temps_pause #temps imaprti 60s + time.depart - time.actuel
         self.timer_text_object.value = str(temps)[:4]
-        if temps<0.1*self.TEMPS:
-            self.timer_text_object.bottomLeft = np.array([-0.25, 0.70], np.float32)
-            self.timer_text_object.topRight = np.array([0.35, 0.95], np.float32)
+        temps2 = time()-self.temps_origine-self.temps_pause
+        self.timer2_text_object.value = str(temps2)[:4]
+        if temps<0.1*self.TEMPS: #pour grossir le chrono et le mettre en rouge c est rigolo
+            self.timer_text_object.bottomLeft = np.array([-0.30, 0.70], np.float32)
+            self.timer_text_object.topRight = np.array([0.30, 0.95], np.float32)
+            self.timer_text_object.texture = glutils.load_texture('tex/fontBred.jpg')
+        else:
+            self.timer_text_object.bottomLeft = np.array([-0.17, 0.80], np.float32)
+            self.timer_text_object.topRight = np.array([0.17, 0.95], np.float32)
+            self.timer_text_object.texture = glutils.load_texture('tex/fontB.jpg')
         
         #teleportation du joueur au centre a la fin du compteur
         if temps<0:
@@ -324,6 +344,24 @@ class ViewerGL:
             self.compteur_80f = 0
             self.overload_text_object.value = " "
 
+    def victoire(self):
+        x, y = self.perso.transformation.translation.xz
+        if 0.5>=abs(x-(self.x_fin+0.5)) and 0.5>=abs(y-(self.y_fin+0.5)):
+            self.scene = 2
+            temps_final = time() - self.temps_origine - self.temps_pause
+            self.objs_fin[1].value = 'Score : ' + str(temps_final)[:4] + ' s'
+    
+    def chargement(self):
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        
+        obj = self.load_screen
+        GL.glUseProgram(obj.program)
+        obj.draw()
+        
+        glfw.swap_buffers(self.window)
+        glfw.poll_events() 
+        
+
     def run_menu(self):
         #self.scene = 1
         # nettoyage de la fenêtre : fond et profondeur
@@ -341,8 +379,9 @@ class ViewerGL:
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         self.update_key()
-        self.timer_update()
+        self.timers_update()
         self.coos_update()
+        self.victoire()
 
         for obj in (self.objs_r + self.objs):
             GL.glUseProgram(obj.program)
@@ -357,18 +396,25 @@ class ViewerGL:
         # The glfwPollEvents function checks if any events are triggered (like keyboard input or mouse movement events), updates the window state, and calls the corresponding functions (which we can register via callback methods).
         glfw.poll_events() 
 
-
-
         self.update_fps()
+
+    def run_fin(self):
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
+        for obj in self.objs_fin:
+            GL.glUseProgram(obj.program)
+            obj.draw()
+            
+        glfw.swap_buffers(self.window)
+        glfw.poll_events() 
         
     def run(self):
 
         while not glfw.window_should_close(self.window):
             
-            glfw.set_input_mode(self.window, glfw.CURSOR, glfw.CURSOR_NORMAL)
+            
 
             while not glfw.window_should_close(self.window) and self.scene == 0:
-                
                 self.run_menu()
             
             #on remet la fonc de callback mouse + desactive le curseur
@@ -377,5 +423,10 @@ class ViewerGL:
 
             while not glfw.window_should_close(self.window) and self.scene == 1:
                 self.run_partie()
+
+            glfw.set_input_mode(self.window, glfw.CURSOR, glfw.CURSOR_NORMAL)
+
+            while not glfw.window_should_close(self.window) and self.scene == 2:
+                self.run_fin()
 
         

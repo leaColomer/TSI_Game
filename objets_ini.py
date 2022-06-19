@@ -13,7 +13,7 @@ def creer_big_maze(viewer): #BIG MAZE COMME TEN AS JAMAIS VU V2
     #m.normalize()
     #alpha = viewer.TAILLE_LABY+2
     #m.apply_matrix(pyrr.matrix44.create_from_scale([alpha, alpha, alpha, 1]))
-    texture = glutils.load_texture('brique.jpg')
+    texture = glutils.load_texture('tex/brique.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, Transformation3D())
     viewer.objs_r.append(o)
     
@@ -25,7 +25,7 @@ def creer_big_maze(viewer): #BIG MAZE COMME TEN AS JAMAIS VU V2
     tr.translation.x = viewer.unite/2 + viewer.x_fin
     tr.translation.y = 0
     tr.translation.z = viewer.unite/2 + viewer.y_fin
-    texture = glutils.load_texture('red.jpg')
+    texture = glutils.load_texture('tex/red.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.objs_r.append(o)
 
@@ -38,12 +38,12 @@ def initialisation(viewer):
     #skybox
     m = Mesh.load_obj('cube_skybox.obj')
     m.normalize()
-    m.apply_matrix(pyrr.matrix44.create_from_scale([50, 30, 50]))
+    m.apply_matrix(pyrr.matrix44.create_from_scale([30, 30, 30]))
     tr = Transformation3D()
     tr.translation.x = viewer.TAILLE_LABY//2
-    tr.translation.y = 30-0.5
+    tr.translation.y = 14.5
     tr.translation.z = viewer.TAILLE_LABY//2
-    texture = glutils.load_texture('tex/sky2.jpg')
+    texture = glutils.load_texture('tex/skybox.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_sky_id, texture, tr)
     viewer.add_object(o)
 
@@ -56,7 +56,7 @@ def initialisation(viewer):
     tr.translation.y = viewer.unite/5 + viewer.TRICHE*3
     tr.translation.z = viewer.unite/2 + viewer.TAILLE_LABY//2
     #tr.rotation_center.z = 0.2
-    texture = glutils.load_texture('red.jpg')
+    texture = glutils.load_texture('tex/red.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.add_object(o)
     viewer.perso = o
@@ -69,7 +69,7 @@ def initialisation(viewer):
     t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1] # coordonnées de textures
     m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
     m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
-    texture = glutils.load_texture('grass.jpg')
+    texture = glutils.load_texture('tex/grass.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, Transformation3D())
     viewer.add_object(o)
 
@@ -85,7 +85,7 @@ def initialisation(viewer):
     #     t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1] # coordonnées de textures
     #     m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
     #     m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
-    #     texture = glutils.load_texture('blue.jpg')
+    #     texture = glutils.load_texture('tex/blue.jpg')
     #     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, Transformation3D())
     #     viewer.add_object(o)
 
@@ -94,7 +94,7 @@ def initialisation(viewer):
 
 
     vao = Text.initalize_geometry()
-    texture = glutils.load_texture('fontB.jpg')
+    texture = glutils.load_texture('tex/fontB.jpg')
     #ARGS self, value, bottomLeft, topRight, vao, nb_triangle, program, texture
 
     #timer
@@ -102,13 +102,18 @@ def initialisation(viewer):
     viewer.add_object(o)
     viewer.timer_text_object = o
 
+    #timer2 général
+    o = Text('HUGO JTM', np.array([-0.98, -1.0], np.float32), np.array([-0.80, -0.85], np.float32), vao, 2, programGUI_id, texture)
+    viewer.add_object(o)
+    viewer.timer2_text_object = o
+
     #compteur de FPS
     o = Text('HUGO JTM', np.array([0.75, 0.85], np.float32), np.array([0.98, 0.98], np.float32), vao, 2, programGUI_id, texture)
     viewer.add_object(o)
     viewer.fps_text_object = o
 
     # affichage coordonnes
-    o = Text('HUGO JTM', np.array([-0.17, -0.98], np.float32), np.array([0.17, -0.85], np.float32), vao, 2, programGUI_id, texture)
+    o = Text('HUGO JTM', np.array([-0.17, -1.0], np.float32), np.array([0.17, -0.85], np.float32), vao, 2, programGUI_id, texture)
     viewer.add_object(o)
     viewer.coos_text_object = o
 
@@ -132,3 +137,20 @@ def initialisation(viewer):
     # Bouton quitter
     o = Text('Quitter', np.array([-0.7, -0.70], np.float32), np.array([0.7, -0.45], np.float32), vao, 2, programGUI_id, texture)
     viewer.objs_menu.append(o)
+
+    # FIN bouton retour au menu
+    o = Text('Retour au menu', np.array([-0.7, -0.70], np.float32), np.array([0.7, -0.45], np.float32), vao, 2, programGUI_id, texture)
+    viewer.objs_fin.append(o)
+
+    # FIN temps final
+    o = Text('Score : 10.0 s', np.array([-0.6, -0.13], np.float32), np.array([0.6, 0.13], np.float32), vao, 2, programGUI_id, texture)
+    viewer.objs_fin.append(o)
+
+    # FIN BRAVISSIMO
+    o = Text('bravissimo', np.array([-0.7, 0.30], np.float32), np.array([0.7, 0.67], np.float32), vao, 2, programGUI_id, texture)
+    viewer.objs_fin.append(o)
+
+    # LOAD SCREEN
+    o = Text('Generation  du  Labyrinthe...', np.array([-0.8, -0.08], np.float32), np.array([0.8, 0.08], np.float32), vao, 2, programGUI_id, texture)
+    viewer.load_screen = o
+
