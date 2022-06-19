@@ -21,26 +21,22 @@ import gen_laby_3d
 class ViewerGL:
     def __init__(self):
 
-        self.scene = 0
-
-        PLEIN_ECRAN = False
-        self.TEMPS = 10
-        
-
-        self.TRICHE = None
-
-        self.TAILLE_LABY = None
-
-        self.premiere_partie = True
-
+        self.PLEIN_ECRAN = False
         self.HEIGHT = 600
         self.WIDTH = 600
 
-        self.SENSI = 0.005
-        self.VITESSE = 1.5 # case par seconde
-        #self.lastX, self.lastY = self.WIDTH / 2, self.HEIGHT / 2
-        self.lastX, self.lastY = 0, 0
 
+
+        self.scene = 0
+        self.premiere_partie = True
+
+        self.TEMPS = None
+        self.TRICHE = None
+        self.TAILLE_LABY = None
+        self.SENSI = None
+        self.VITESSE = None
+        
+        self.lastX, self.lastY = 0, 0
         self.i = 0
         self.j = 0
         
@@ -86,7 +82,7 @@ class ViewerGL:
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # création et paramétrage de la fenêtre
         glfw.window_hint(glfw.RESIZABLE, False)
-        if PLEIN_ECRAN:
+        if self.PLEIN_ECRAN:
             PLEIN_ECRAN_ = glfw.get_primary_monitor()
         else:
             PLEIN_ECRAN_ = None

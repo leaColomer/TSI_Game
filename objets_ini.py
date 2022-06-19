@@ -18,7 +18,7 @@ def creer_big_maze(viewer): #BIG MAZE COMME TEN AS JAMAIS VU V2
     viewer.objs_r.append(o)
     
     #cube fin
-    m = Mesh.load_obj('cube.obj')
+    m = Mesh.load_obj('cylindre.obj')
     m.normalize()
     m.apply_matrix(pyrr.matrix44.create_from_scale([0.3, 0.3, 0.3, 1]))
     tr = Transformation3D()

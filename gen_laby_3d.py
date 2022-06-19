@@ -10,6 +10,9 @@ class Maillage():
         self.normales = [ [0.0, 0.0, 1.0], [0.0, 0.0, -1.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0] ]
         self.textures = [ [0, 0.25], [0.25, 0.25], [0.5, 0.25], [0.75, 0.25], [0.0, 0.5], [0.25, 0.5], [0.5, 0.5], [0.75, 0.5], [0.25, 0.75], [0.5, 0.75], [0.25, 1.0], [0.5,  1.0] ]
         self.nombre_murs = 0
+        self.nombre_piliers = 0
+        self.nombre_face_mur = None
+        self.nombre_face_pillier = None
 
     def creer_mur(self, j, i, o, epaisseur):
         #coos d'un mur horizontal à l'origine
@@ -17,7 +20,7 @@ class Maillage():
         sommets_mur_h = [ [e, 0.0,  0.0], [e,  0.0,  e], [e,  1.0,  0.0], [e,  1.0,  e], [1.0,  0.0,  0.0], [1.0,  0.0,  e], [1.0,  1.0,  0.0], [1.0,  1.0,  e] ]
         sommets_mur_g = [ [0.0, 0.0,  e], [e,  0.0,  e], [0.0,  1.0,  e], [e,  1.0,  e], [0.0,  0.0,  1.0], [e,  0.0,  1.0], [0.0,  1.0,  1.0], [e,  1.0,  1.0] ]
         faces_mur = [   [[1,9,2], [7,12,2], [5,10,2] ], [[1,9,2], [3,11,2], [7,12,2] ], [[1,5,4], [4,2,4], [3,1,4]] , [[1,5,4], [2,6,4], [4,2,4]], [[5,8,3], [7,4,3], [8,3,3]], [[5,8,3], [8,3,3], [6,7,3]], [[2,6,1], [6,7,1], [8,3,1]], [[2,6,1], [8,3,1], [4,2,1]]   ]
-        nombre_face_mur = len(faces_mur)
+        self.nombre_face_mur = len(faces_mur)
         if o: #si c'est un mur horizontal
             sommets_mur = sommets_mur_h
         else:
@@ -30,9 +33,28 @@ class Maillage():
 
         for face in faces_mur:
             for coin in face:
-                coin[0] += nombre_face_mur*self.nombre_murs
+                coin[0] += self.nombre_face_mur*self.nombre_murs
         self.faces += faces_mur
         self.nombre_murs +=1
+
+    def creer_pillier(self, j, i, epaisseur):
+        e = epaisseur #epaisseur du pillier = du mur
+        sommets_pillier = [ [0.0, 0.0,  0.0], [0.0,  0.0,  e], [0.0,  1.0,  0.0], [0.0,  1.0,  e], [e,  0.0,  0.0], [e,  0.0,  e], [e,  1.0,  0.0], [e,  1.0,  e] ]
+        faces_pillier = [   [[1,9,2], [7,12,2], [5,10,2] ], [[1,9,2], [3,11,2], [7,12,2] ], [[1,5,4], [4,2,4], [3,1,4]] , [[1,5,4], [2,6,4], [4,2,4]], [[5,8,3], [7,4,3], [8,3,3]], [[5,8,3], [8,3,3], [6,7,3]], [[2,6,1], [6,7,1], [8,3,1]], [[2,6,1], [8,3,1], [4,2,1]]   ]
+        self.nombre_face_pillier = len(faces_pillier)
+
+        for sommet in sommets_pillier:
+            sommet[0] += i
+            sommet[2] += j
+
+        self.sommets += sommets_pillier
+
+        for face in faces_pillier:
+            for coin in face:
+                coin[0] += self.nombre_face_pillier * self.nombre_piliers + self.nombre_face_mur * self.nombre_murs
+
+        self.faces += faces_pillier
+        self.nombre_piliers +=1
 
 
 def gen_maillage(mat,e):
@@ -47,6 +69,9 @@ def gen_maillage(mat,e):
             elif mat[i][j] == 1:
                 m.creer_mur(i,j,0,e)
                 m.creer_mur(i,j,1,e)
+    for i in range(TAILLE_LABY):
+        for j in range(TAILLE_LABY):
+            m.creer_pillier(i,j,e)
     print("Il y a ", m.nombre_murs, " murs dans le labyrinthe.")
     return m
 
@@ -75,11 +100,6 @@ def maillage_vers_obj(m, chemin_fichier):
             for coin in face:
                     f.write(str(coin[0]) + '/' + str(coin[1]) + '/' + str(coin[2]) + ' ')
             f.write("\n")
-
-            # f.write("f")
-            # for i in p.vertices:
-            #     f.write(" %d" % (i + 1))
-            # f.write("\n")
 
 def nouveau_obj_laby(matrice_laby, chemin_fichier, e):
     #print(np.array(matrice_laby))

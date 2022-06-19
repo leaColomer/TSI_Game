@@ -6,6 +6,12 @@ def main():
 
     viewer.TRICHE = 0 # 0 pas de triche, 1 triche
 
+    viewer.SENSI = 0.005
+    viewer.VITESSE = 1.5 # case par seconde
+
+
+
+    viewer.TEMPS = 60
     viewer.TAILLE_LABY = 14 #taille du cote du labyrinthe  
     viewer.LONGUEUR_CHEMIN_PARFAIT = 98 #chemin de 97 cases c'est bien pour 60s
     viewer.epaisseur_mur = 0.09
