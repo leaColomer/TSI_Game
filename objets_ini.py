@@ -38,14 +38,15 @@ def initialisation(viewer):
     #skybox
     m = Mesh.load_obj('cube_skybox.obj')
     m.normalize()
-    m.apply_matrix(pyrr.matrix44.create_from_scale([30, 30, 30]))
+    m.apply_matrix(pyrr.matrix44.create_from_scale([20, 20, 20]))
     tr = Transformation3D()
     tr.translation.x = viewer.TAILLE_LABY//2
-    tr.translation.y = 14.5
+    tr.translation.y = 10.5
     tr.translation.z = viewer.TAILLE_LABY//2
     texture = glutils.load_texture('tex/skybox.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_sky_id, texture, tr)
     viewer.add_object(o)
+    viewer.objs_attaches_perso.append(o)
 
     #personnage
     m = Mesh.load_obj('cylindre.obj')
@@ -112,10 +113,10 @@ def initialisation(viewer):
     viewer.add_object(o)
     viewer.fps_text_object = o
 
-    # affichage coordonnes
-    o = Text('HUGO JTM', np.array([-0.17, -1.0], np.float32), np.array([0.17, -0.85], np.float32), vao, 2, programGUI_id, texture)
-    viewer.add_object(o)
-    viewer.coos_text_object = o
+    # # affichage coordonnes
+    # o = Text('HUGO JTM', np.array([-0.17, -1.0], np.float32), np.array([0.17, -0.85], np.float32), vao, 2, programGUI_id, texture)
+    # viewer.add_object(o)
+    # viewer.coos_text_object = o
 
     # affichage info commande ESC
     o = Text('PAUSE [ESC]', np.array([-0.98, 0.85], np.float32), np.array([-0.50, 0.98], np.float32), vao, 2, programGUI_id, texture)

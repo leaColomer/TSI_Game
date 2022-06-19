@@ -5,9 +5,12 @@ import OpenGL.GL as GL
 import glfw
 import pyrr
 import numpy as np
-from cpe3d import Object3D, Camera
+from cpe3d import Object3D, Camera, Transformation3D
 from time import time, sleep
 import collision
+
+import mesh
+
 
 import objets_ini
 import gen_laby_mat
@@ -21,7 +24,7 @@ class ViewerGL:
         self.scene = 0
 
         PLEIN_ECRAN = False
-        self.TEMPS = 60
+        self.TEMPS = 10
         
 
         self.TRICHE = None
@@ -41,6 +44,7 @@ class ViewerGL:
         self.i = 0
         self.j = 0
         
+        self.coos_text_object = None
 
         self.dernier_temps = 0
         self.fps_10_last = [0 for _ in range(10)]
@@ -48,7 +52,7 @@ class ViewerGL:
         self.compteur_80f = 0
         self.overload_text_object = None
 
-        self.coos_text_object = None
+        self.compteur_teleportation = 0
 
         self.temps_origine = None
         self.temps_depart = None
@@ -103,12 +107,15 @@ class ViewerGL:
         glfw.set_mouse_button_callback(self.window, self.clic_callback)
 
         self.objs = []
+        self.objs_attaches_perso = []
         self.objs_r = []
         self.objs_menu = []
         self.objs_fin = []
         self.touch = {}
 
+
         self.perso = None
+
         self.murs = None
 
         self.set_camera(Camera())
@@ -266,13 +273,15 @@ class ViewerGL:
         if not self.collision_global(nouv_coo.x, coo.z, self.rayon_perso):
             coo.x += (deplacement_oriente*pas_de_deplacmeent)[0]
             self.perso.transformation.translation = coo
-            
+        
+    def objs_suivent_perso(self):
+        #la cam a le droit a un traitement particulier
+        self.cam.transformation.rotation_center = self.perso.transformation.translation + self.perso.transformation.rotation_center
+        self.cam.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0])
 
-        if not(glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0):
-            #self.cam.transformation.rotation_euler = self.perso.transformation.rotation_euler.copy() 
-            #self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
-            self.cam.transformation.rotation_center = self.perso.transformation.translation + self.perso.transformation.rotation_center
-            self.cam.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0.2])
+        #tout les autre objets concernes sont translates au meme endroit que le joueur
+        for obj in self.objs_attaches_perso:
+            obj.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0])
 
     def mouse_partie_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
 
@@ -309,8 +318,26 @@ class ViewerGL:
         
         #teleportation du joueur au centre a la fin du compteur
         if temps<0:
-            self.temps_depart = time()
-            self.perso.transformation.translation = pyrr.Vector3([self.unite/2 + self.TAILLE_LABY//2, self.unite/5 + self.TRICHE*3, self.unite/2 + self.TAILLE_LABY//2])
+            self.retour_a_la_case_depart() #monopoly
+    
+    def retour_a_la_case_depart(self):
+        self.temps_depart = time()
+        self.temps_pause+=2
+    
+        program3d_sky_id = glutils.create_program_from_file('shader.vert', 'sky.frag') #frag sans illumination
+
+        #on créé un objet noir autour de la cam ca evite de faire une scene de transition
+        m = mesh.Mesh.load_obj('cube.obj')
+        m.normalize()
+        m.apply_matrix(pyrr.matrix44.create_from_scale([0.1, 0.1, 0.1]))
+        texture = glutils.load_texture('tex/pizzas.jpg')
+        o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_sky_id, texture, Transformation3D())
+        self.add_object(o)
+        self.objs_attaches_perso.append(o)
+
+        self.compteur_teleportation = time()
+
+        self.perso.transformation.translation = pyrr.Vector3([self.unite/2 + self.TAILLE_LABY//2, self.unite/5 + self.TRICHE*3, self.unite/2 + self.TAILLE_LABY//2])
 
 
     def coos_update(self):
@@ -378,9 +405,17 @@ class ViewerGL:
         # nettoyage de la fenêtre : fond et profondeur
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
+        if self.compteur_teleportation != 0 :
+            if time() - self.compteur_teleportation > 2 : #deux secondes d'atente
+                #on retire l'ecran transition
+                self.objs.pop()
+                self.objs_attaches_perso.pop()
+                self.compteur_teleportation = 0
+
         self.update_key()
+        self.objs_suivent_perso()
         self.timers_update()
-        self.coos_update()
+        #self.coos_update()
         self.victoire()
 
         for obj in (self.objs_r + self.objs):
@@ -396,7 +431,9 @@ class ViewerGL:
         # The glfwPollEvents function checks if any events are triggered (like keyboard input or mouse movement events), updates the window state, and calls the corresponding functions (which we can register via callback methods).
         glfw.poll_events() 
 
+
         self.update_fps()
+
 
     def run_fin(self):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
