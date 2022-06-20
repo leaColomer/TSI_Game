@@ -13,10 +13,9 @@ def main():
 
     viewer.TEMPS = 60
     viewer.TAILLE_LABY = 14 #taille du cote du labyrinthe  
-    viewer.LONGUEUR_CHEMIN_PARFAIT = 98 #chemin de 97 cases c'est bien pour 60s
+    viewer.LONGUEUR_CHEMIN_PARFAIT = 98 #chemin de 98 cases c'est bien pour 60s, environ 5s de rab
     viewer.epaisseur_mur = 0.09
-    viewer.unite = 1 #longeur d'un mur OU PLUTOT D'UNE CASE DU LABY
-    viewer.rayon_perso = 0.1 # 0.3*viewer.unite
+    viewer.rayon_perso = 0.1
 
 
     objets_ini.initialisation(viewer)

@@ -8,13 +8,13 @@ import gen_laby_mat
 import numpy as np
 
 class Murs():
-    def __init__(self, mat, eppaiseur_mur, unite):
+    def __init__(self, mat, eppaiseur_mur):
 
         self.TAILLE = len(mat[0]) - 1 #nombre de case sur un cote du laby, taille de la grille donc
         self.LIMITE = self.TAILLE + 2 # taille de self.mat
         self.grille = [[[] for _ in range(self.TAILLE)] for _ in range(self.TAILLE)]
         self.e = eppaiseur_mur
-        self.u = unite
+        self.u = 1
 
         self.mat = self.maj_mat(mat) # de taille self.LIMITE
 

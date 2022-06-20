@@ -37,18 +37,21 @@ class ViewerGL:
         self.VITESSE = None
         
         self.lastX, self.lastY = 0, 0
+        self.ini_camera=True
+
         self.i = 0
         self.j = 0
         
         self.coos_text_object = None
 
         self.dernier_temps = 0
-        self.fps_10_last = [0 for _ in range(10)]
+        self.fps_10_last = [0 for _ in range(60)]
         self.fps_text_object = None
         self.compteur_80f = 0
         self.overload_text_object = None
 
         self.compteur_teleportation = 0
+        self.premiere_teleportation = True
 
         self.temps_origine = None
         self.temps_depart = None
@@ -57,7 +60,6 @@ class ViewerGL:
         self.timer_text_object = None
         self.timer2_text_object = None
 
-        self.unite = None
         self.rayon_perso = None
         self.epaisseur_mur = None
 
@@ -149,13 +151,13 @@ class ViewerGL:
 
     def nvlle_partie(self):
 
-        self.perso.transformation.translation.x = self.unite/2 + self.TAILLE_LABY//2
-        self.perso.transformation.translation.y = self.unite/5 + self.TRICHE*3
-        self.perso.transformation.translation.z = self.unite/2 + self.TAILLE_LABY//2
+        self.perso.transformation.translation.x = 1/2 + self.TAILLE_LABY//2
+        self.perso.transformation.translation.y = 1/5 + self.TRICHE*1.5
+        self.perso.transformation.translation.z = 1/2 + self.TAILLE_LABY//2
 
         matrice_laby, _, [self.x_fin,self.y_fin] = gen_laby_mat.genere_spe(self.TAILLE_LABY,self.LONGUEUR_CHEMIN_PARFAIT,0) # 0 erreur. le chemin parf fait exactement 97(x) cases de long
         gen_laby_3d.nouveau_obj_laby(matrice_laby, 'laby.obj', self.epaisseur_mur) #regenerer laby.obj
-        self.murs = gen_laby_2d.Murs(matrice_laby, self.epaisseur_mur, self.unite)
+        self.murs = gen_laby_2d.Murs(matrice_laby, self.epaisseur_mur)
 
         if not self.premiere_partie:
             self.objs_r = [] #on suppr l ancien laby et ses objets
@@ -189,8 +191,8 @@ class ViewerGL:
     def collision_global(self, x, y, r):
         contact = False
         maxim = len(self.murs.grille[0])
-        j = int(x/self.unite)
-        i = int(y/self.unite)
+        j = int(x)
+        i = int(y)
 
         if 0<=i<maxim and 0<=j<maxim:
             murs_a_tester = self.murs.grille[i][j]
@@ -255,29 +257,35 @@ class ViewerGL:
 
         coo = self.perso.transformation.translation
 
-        fps = self.fps_10_last[9]
+        fps = self.fps_10_last[-1]
         if fps>20:
             pas_de_deplacmeent = self.VITESSE/fps
         else:
             pas_de_deplacmeent = self.VITESSE/20
         nouv_coo = coo + deplacement_oriente*pas_de_deplacmeent
         
-        if not self.collision_global(coo.x, nouv_coo.z, self.rayon_perso):
-            coo.z += (deplacement_oriente*pas_de_deplacmeent)[2]
-            self.perso.transformation.translation = coo
-        
-        if not self.collision_global(nouv_coo.x, coo.z, self.rayon_perso):
-            coo.x += (deplacement_oriente*pas_de_deplacmeent)[0]
-            self.perso.transformation.translation = coo
+        if not self.TRICHE:
+            if not self.collision_global(coo.x, nouv_coo.z, self.rayon_perso):
+                coo.z += (deplacement_oriente*pas_de_deplacmeent)[2]
+                self.perso.transformation.translation = coo
+            
+            if not self.collision_global(nouv_coo.x, coo.z, self.rayon_perso):
+                coo.x += (deplacement_oriente*pas_de_deplacmeent)[0]
+                self.perso.transformation.translation = coo
+        else:
+                coo.z += (deplacement_oriente*pas_de_deplacmeent)[2]
+                coo.x += (deplacement_oriente*pas_de_deplacmeent)[0]
+                self.perso.transformation.translation = coo
         
     def objs_suivent_perso(self):
-        #la cam a le droit a un traitement particulier
-        self.cam.transformation.rotation_center = self.perso.transformation.translation + self.perso.transformation.rotation_center
+        self.cam.transformation.rotation_center = self.perso.transformation.rotation_center + self.perso.transformation.translation
         self.cam.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0])
 
-        #tout les autre objets concernes sont translates au meme endroit que le joueur
-        for obj in self.objs_attaches_perso:
-            obj.transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0])
+        #skybos
+        self.objs_attaches_perso[-1].transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 10.5, 0])
+        #ecran de transition teleportation
+        self.objs_attaches_perso[-1].transformation.translation = self.perso.transformation.translation  + pyrr.Vector3([0, 0.2, 0])
+        
 
     def mouse_partie_callback(self, window, xpos, ypos): #fonction dediee a la gestion de la cam par la souris
 
@@ -286,6 +294,9 @@ class ViewerGL:
 
         self.lastX = xpos
         self.lastY = ypos
+        if self.ini_camera:
+            self.ini_camera = False
+            xoffset,yoffset = 0,0
 
         roll = self.cam.transformation.rotation_euler[pyrr.euler.index().roll]
     
@@ -318,11 +329,13 @@ class ViewerGL:
     
     def retour_a_la_case_depart(self):
         self.temps_depart = time()
-        self.temps_pause+=2
+        if self.premiere_teleportation:
+            self.premiere_teleportation = False
+            self.temps_pause+=2
     
         program3d_sky_id = glutils.create_program_from_file('shader.vert', 'sky.frag') #frag sans illumination
 
-        #on créé un objet noir autour de la cam ca evite de faire une scene de transition
+        #on créé un objet autour de la cam ca evite de faire une scene de transition
         m = mesh.Mesh.load_obj('cube.obj')
         m.normalize()
         m.apply_matrix(pyrr.matrix44.create_from_scale([0.1, 0.1, 0.1]))
@@ -333,19 +346,21 @@ class ViewerGL:
 
         self.compteur_teleportation = time()
 
-        self.perso.transformation.translation = pyrr.Vector3([self.unite/2 + self.TAILLE_LABY//2, self.unite/5 + self.TRICHE*3, self.unite/2 + self.TAILLE_LABY//2])
+        self.perso.transformation.translation = pyrr.Vector3([1/2 + self.TAILLE_LABY//2, 1/5 + self.TRICHE*1.5, 1/2 + self.TAILLE_LABY//2])
 
 
-    def coos_update(self):
+    def coos_update(self): #inutilisée
         coos = self.perso.transformation.translation
-        self.i = int(coos[0]/self.unite) - self.TAILLE_LABY//2
-        self.j = int(coos[2]/self.unite) - self.TAILLE_LABY//2
+        self.i = int(coos[0]) - self.TAILLE_LABY//2
+        self.j = int(coos[2]) - self.TAILLE_LABY//2
         self.coos_text_object.value = '(' + str(self.i) + ',' + str(self.j) + ')'
 
     def update_fps(self):
         temps = time()
         delta = (temps - self.dernier_temps)
-
+        
+        if delta == 0: #eviter les divisions par zero parfois ca arrive je sais pas pourquoi
+            delta += 0.001
         fps = 1/delta
         self.fps_10_last.append(fps)
         self.fps_10_last.pop(0)
@@ -407,6 +422,7 @@ class ViewerGL:
                 self.objs.pop()
                 self.objs_attaches_perso.pop()
                 self.compteur_teleportation = 0
+                self.perso.transformation.translation = pyrr.Vector3([1/2 + self.TAILLE_LABY//2, 1/5 + self.TRICHE*1.5, 1/2 + self.TAILLE_LABY//2]) # on re-teleporte le joueur au cas ou le petit malin ait deja commence a se deplacer.
 
         self.update_key()
         self.objs_suivent_perso()

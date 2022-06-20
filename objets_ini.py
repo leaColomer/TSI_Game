@@ -22,9 +22,9 @@ def creer_big_maze(viewer): #BIG MAZE COMME TEN AS JAMAIS VU V2
     m.normalize()
     m.apply_matrix(pyrr.matrix44.create_from_scale([0.3, 0.3, 0.3, 1]))
     tr = Transformation3D()
-    tr.translation.x = viewer.unite/2 + viewer.x_fin
-    tr.translation.y = 0
-    tr.translation.z = viewer.unite/2 + viewer.y_fin
+    tr.translation.x = 1/2 + viewer.x_fin
+    tr.translation.y = 1/2
+    tr.translation.z = 1/2 + viewer.y_fin
     texture = glutils.load_texture('tex/red.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, tr)
     viewer.objs_r.append(o)
@@ -53,9 +53,9 @@ def initialisation(viewer):
     m.normalize()
     m.apply_matrix(pyrr.matrix44.create_from_scale([viewer.rayon_perso*1.3, 0.03, viewer.rayon_perso*1.3, 1]))
     tr = Transformation3D()
-    tr.translation.x = viewer.unite/2 + viewer.TAILLE_LABY//2
-    tr.translation.y = viewer.unite/5 + viewer.TRICHE*3
-    tr.translation.z = viewer.unite/2 + viewer.TAILLE_LABY//2
+    tr.translation.x = 1/2 + viewer.TAILLE_LABY//2
+    tr.translation.y = 1/5 + viewer.TRICHE*3
+    tr.translation.z = 1/2 + viewer.TAILLE_LABY//2
     #tr.rotation_center.z = 0.2
     texture = glutils.load_texture('tex/red.jpg')
     o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_id, texture, tr)
