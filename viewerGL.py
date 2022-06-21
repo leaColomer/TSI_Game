@@ -29,9 +29,10 @@ class ViewerGL:
 
         self.scene = 0
         self.premiere_partie = True
+        self.recommencer_possbile = False
 
         self.TEMPS = None
-        self.TRICHE = None
+        self.TRICHE = 0
         self.TAILLE_LABY = None
         self.SENSI = None
         self.VITESSE = None
@@ -136,7 +137,7 @@ class ViewerGL:
                 self.chargement()
                 self.nvlle_partie()
             if b_re.bottomLeft[0]<x<b_re.topRight[0] and b_re.bottomLeft[1]<y<b_re.topRight[1]:
-                if not self.premiere_partie:
+                if self.recommencer_possbile:
                     self.scene = 1
                     self.reprendre_partie()
             if b_quit.bottomLeft[0]<x<b_quit.topRight[0] and b_quit.bottomLeft[1]<y<b_quit.topRight[1]:
@@ -151,8 +152,10 @@ class ViewerGL:
 
     def nvlle_partie(self):
 
+        self.recommencer_possbile = True
+
         self.perso.transformation.translation.x = 1/2 + self.TAILLE_LABY//2
-        self.perso.transformation.translation.y = 1/5 + self.TRICHE*1.5
+        self.perso.transformation.translation.y = 1/5 + self.TRICHE*2
         self.perso.transformation.translation.z = 1/2 + self.TAILLE_LABY//2
 
         matrice_laby, _, [self.x_fin,self.y_fin] = gen_laby_mat.genere_spe(self.TAILLE_LABY,self.LONGUEUR_CHEMIN_PARFAIT,0) # 0 erreur. le chemin parf fait exactement 97(x) cases de long
@@ -239,6 +242,12 @@ class ViewerGL:
         GL.glUniformMatrix4fv(loc, 1, GL.GL_FALSE, self.cam.projection)
 
     def update_key(self):
+        #la triche
+        if glfw.KEY_T in self.touch and self.touch[glfw.KEY_T] > 0: #KEY T
+            if self.TRICHE == 0:
+                self.TRICHE = 1
+                self.perso.transformation.translation.y += 2
+
         deplacement = np.array([0.0,0.0,0.0])
         if glfw.KEY_W in self.touch and self.touch[glfw.KEY_W] > 0: #KEY Z
             deplacement += [0.0, 0.0, 1.0]
@@ -339,14 +348,14 @@ class ViewerGL:
         m = mesh.Mesh.load_obj('cube.obj')
         m.normalize()
         m.apply_matrix(pyrr.matrix44.create_from_scale([0.1, 0.1, 0.1]))
-        texture = glutils.load_texture('tex/pizzas.jpg')
+        texture = glutils.load_texture('tex/parquet.jpg')
         o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), program3d_sky_id, texture, Transformation3D())
         self.add_object(o)
         self.objs_attaches_perso.append(o)
 
         self.compteur_teleportation = time()
 
-        self.perso.transformation.translation = pyrr.Vector3([1/2 + self.TAILLE_LABY//2, 1/5 + self.TRICHE*1.5, 1/2 + self.TAILLE_LABY//2])
+        self.perso.transformation.translation = pyrr.Vector3([1/2 + self.TAILLE_LABY//2, 1/5 + self.TRICHE*2, 1/2 + self.TAILLE_LABY//2])
 
 
     def coos_update(self): #inutilisée
@@ -387,7 +396,10 @@ class ViewerGL:
         if 0.5>=abs(x-(self.x_fin+0.5)) and 0.5>=abs(y-(self.y_fin+0.5)):
             self.scene = 2
             temps_final = time() - self.temps_origine - self.temps_pause
+            if self.TRICHE:
+                self.objs_fin[2].value = "TRICHEUR"
             self.objs_fin[1].value = 'Score : ' + str(temps_final)[:4] + ' s'
+            self.recommencer_possbile = False
     
     def chargement(self):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -422,7 +434,7 @@ class ViewerGL:
                 self.objs.pop()
                 self.objs_attaches_perso.pop()
                 self.compteur_teleportation = 0
-                self.perso.transformation.translation = pyrr.Vector3([1/2 + self.TAILLE_LABY//2, 1/5 + self.TRICHE*1.5, 1/2 + self.TAILLE_LABY//2]) # on re-teleporte le joueur au cas ou le petit malin ait deja commence a se deplacer.
+                self.perso.transformation.translation = pyrr.Vector3([1/2 + self.TAILLE_LABY//2, 1/5 + self.TRICHE*2, 1/2 + self.TAILLE_LABY//2]) # on re-teleporte le joueur au cas ou le petit malin ait deja commence a se deplacer.
 
         self.update_key()
         self.objs_suivent_perso()
